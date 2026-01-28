@@ -17,8 +17,8 @@ from isaaclab.utils import configclass
 
 from unitree_rl_lab.assets.robots import unitree_actuators
 
-UNITREE_MODEL_DIR = "path/to/unitree_model"  # Replace with the actual path to your unitree_model directory
-UNITREE_ROS_DIR = "path/to/unitree_ros"  # Replace with the actual path to your unitree_ros package
+UNITREE_MODEL_DIR = "/home/unitree_rl_lab/unitree_model"  # Replace with the actual path to your unitree_model directory
+UNITREE_ROS_DIR = "/home/unitree_rl_lab/unitree_ros"  # Replace with the actual path to your unitree_ros package
 
 
 @configclass
@@ -92,131 +92,131 @@ class UnitreeUrdfFileCfg(sim_utils.UrdfFileCfg):
 
 """ Configuration for the Unitree robots."""
 
-UNITREE_GO2_CFG = UnitreeArticulationCfg(
-    # spawn=UnitreeUrdfFileCfg(
-    #     asset_path=f"{UNITREE_ROS_DIR}/robots/go2_description/urdf/go2_description.urdf",
-    # ),
-    spawn=UnitreeUsdFileCfg(
-        usd_path=f"{UNITREE_MODEL_DIR}/Go2/usd/go2.usd",
-    ),
-    init_state=ArticulationCfg.InitialStateCfg(
-        pos=(0.0, 0.0, 0.4),
-        joint_pos={
-            ".*R_hip_joint": -0.1,
-            ".*L_hip_joint": 0.1,
-            "F[L,R]_thigh_joint": 0.8,
-            "R[L,R]_thigh_joint": 1.0,
-            ".*_calf_joint": -1.5,
-        },
-        joint_vel={".*": 0.0},
-    ),
-    actuators={
-        "GO2HV": unitree_actuators.UnitreeActuatorCfg_Go2HV(
-            joint_names_expr=[".*"],
-            stiffness=25.0,
-            damping=0.5,
-            friction=0.01,
-        ),
-    },
-    # fmt: off
-    joint_sdk_names=[
-        "FR_hip_joint", "FR_thigh_joint", "FR_calf_joint",
-        "FL_hip_joint", "FL_thigh_joint", "FL_calf_joint",
-        "RR_hip_joint", "RR_thigh_joint", "RR_calf_joint",
-        "RL_hip_joint", "RL_thigh_joint", "RL_calf_joint"
-    ],
-    # fmt: on
-)
+# UNITREE_GO2_CFG = UnitreeArticulationCfg(
+#     spawn=UnitreeUrdfFileCfg(
+#         asset_path=f"{UNITREE_ROS_DIR}/robots/go2_description/urdf/go2_description.urdf",
+#     ),
+#     # spawn=UnitreeUsdFileCfg(
+#     #     usd_path=f"{UNITREE_MODEL_DIR}/Go2/usd/go2.usd",
+#     # ),
+#     init_state=ArticulationCfg.InitialStateCfg(
+#         pos=(0.0, 0.0, 0.4),
+#         joint_pos={
+#             ".*R_hip_joint": -0.1,
+#             ".*L_hip_joint": 0.1,
+#             "F[L,R]_thigh_joint": 0.8,
+#             "R[L,R]_thigh_joint": 1.0,
+#             ".*_calf_joint": -1.5,
+#         },
+#         joint_vel={".*": 0.0},
+#     ),
+#     actuators={
+#         "GO2HV": unitree_actuators.UnitreeActuatorCfg_Go2HV(
+#             joint_names_expr=[".*"],
+#             stiffness=25.0,
+#             damping=0.5,
+#             friction=0.01,
+#         ),
+#     },
+#     # fmt: off
+#     joint_sdk_names=[
+#         "FR_hip_joint", "FR_thigh_joint", "FR_calf_joint",
+#         "FL_hip_joint", "FL_thigh_joint", "FL_calf_joint",
+#         "RR_hip_joint", "RR_thigh_joint", "RR_calf_joint",
+#         "RL_hip_joint", "RL_thigh_joint", "RL_calf_joint"
+#     ],
+#     # fmt: on
+# )
 
-UNITREE_GO2W_CFG = UnitreeArticulationCfg(
-    # spawn=UnitreeUrdfFileCfg(
-    #     asset_path=f"{UNITREE_ROS_DIR}/robots/go2w_description/urdf/go2w_description.urdf",
-    # ),
-    spawn=UnitreeUsdFileCfg(
-        usd_path=f"{UNITREE_MODEL_DIR}/Go2W/usd/go2w.usd",
-    ),
-    init_state=ArticulationCfg.InitialStateCfg(
-        pos=(0.0, 0.0, 0.45),
-        joint_pos={
-            "F.*_thigh_joint": 0.8,
-            "R.*_thigh_joint": 0.8,
-            ".*_calf_joint": -1.5,
-            ".*_foot_joint": 0.0,
-        },
-        joint_vel={".*": 0.0},
-    ),
-    actuators={
-        "GO2HV": IdealPDActuatorCfg(
-            joint_names_expr=[".*"],
-            effort_limit=23.5,
-            velocity_limit=30.0,
-            stiffness={
-                ".*_hip_.*": 25.0,
-                ".*_thigh_.*": 25.0,
-                ".*_calf_.*": 25.0,
-                ".*_foot_.*": 0,
-            },
-            damping=0.5,
-            friction=0.01,
-        ),
-    },
-    # fmt: off
-    joint_sdk_names=[
-        "FR_hip_joint", "FR_thigh_joint", "FR_calf_joint",
-        "FL_hip_joint", "FL_thigh_joint", "FL_calf_joint",
-        "RR_hip_joint", "RR_thigh_joint", "RR_calf_joint",
-        "RL_hip_joint", "RL_thigh_joint", "RL_calf_joint",
-        "FR_foot_joint", "FL_foot_joint", "RR_foot_joint", "RL_foot_joint"
-    ],
-    # fmt: on
-)
+# UNITREE_GO2W_CFG = UnitreeArticulationCfg(
+#     # spawn=UnitreeUrdfFileCfg(
+#     #     asset_path=f"{UNITREE_ROS_DIR}/robots/go2w_description/urdf/go2w_description.urdf",
+#     # ),
+#     spawn=UnitreeUsdFileCfg(
+#         usd_path=f"{UNITREE_MODEL_DIR}/Go2W/usd/go2w.usd",
+#     ),
+#     init_state=ArticulationCfg.InitialStateCfg(
+#         pos=(0.0, 0.0, 0.45),
+#         joint_pos={
+#             "F.*_thigh_joint": 0.8,
+#             "R.*_thigh_joint": 0.8,
+#             ".*_calf_joint": -1.5,
+#             ".*_foot_joint": 0.0,
+#         },
+#         joint_vel={".*": 0.0},
+#     ),
+#     actuators={
+#         "GO2HV": IdealPDActuatorCfg(
+#             joint_names_expr=[".*"],
+#             effort_limit=23.5,
+#             velocity_limit=30.0,
+#             stiffness={
+#                 ".*_hip_.*": 25.0,
+#                 ".*_thigh_.*": 25.0,
+#                 ".*_calf_.*": 25.0,
+#                 ".*_foot_.*": 0,
+#             },
+#             damping=0.5,
+#             friction=0.01,
+#         ),
+#     },
+#     # fmt: off
+#     joint_sdk_names=[
+#         "FR_hip_joint", "FR_thigh_joint", "FR_calf_joint",
+#         "FL_hip_joint", "FL_thigh_joint", "FL_calf_joint",
+#         "RR_hip_joint", "RR_thigh_joint", "RR_calf_joint",
+#         "RL_hip_joint", "RL_thigh_joint", "RL_calf_joint",
+#         "FR_foot_joint", "FL_foot_joint", "RR_foot_joint", "RL_foot_joint"
+#     ],
+#     # fmt: on
+# )
 
-UNITREE_B2_CFG = UnitreeArticulationCfg(
-    # spawn=UnitreeUrdfFileCfg(
-    #     asset_path=f"{UNITREE_ROS_DIR}/robots/b2_description/urdf/b2_description.urdf",
-    # ),
-    spawn=UnitreeUsdFileCfg(
-        usd_path=f"{UNITREE_MODEL_DIR}/B2/usd/b2.usd",
-    ),
-    init_state=ArticulationCfg.InitialStateCfg(
-        pos=(0.0, 0.0, 0.58),
-        joint_pos={
-            ".*R_hip_joint": -0.1,
-            ".*L_hip_joint": 0.1,
-            "F[L,R]_thigh_joint": 0.8,
-            "R[L,R]_thigh_joint": 1.0,
-            ".*_calf_joint": -1.5,
-        },
-        joint_vel={".*": 0.0},
-    ),
-    actuators={
-        "M107-24-2": IdealPDActuatorCfg(
-            joint_names_expr=[".*_hip_.*", ".*_thigh_.*"],
-            effort_limit=200,
-            velocity_limit=23,
-            stiffness=160.0,
-            damping=5.0,
-            friction=0.01,
-        ),
-        "2": IdealPDActuatorCfg(
-            joint_names_expr=[".*_calf_.*"],
-            effort_limit=320,
-            velocity_limit=14,
-            stiffness=160.0,
-            damping=5.0,
-            friction=0.01,
-        ),
-    },
-    joint_sdk_names=UNITREE_GO2_CFG.joint_sdk_names.copy(),
-)
+# UNITREE_B2_CFG = UnitreeArticulationCfg(
+#     # spawn=UnitreeUrdfFileCfg(
+#     #     asset_path=f"{UNITREE_ROS_DIR}/robots/b2_description/urdf/b2_description.urdf",
+#     # ),
+#     spawn=UnitreeUsdFileCfg(
+#         usd_path=f"{UNITREE_MODEL_DIR}/B2/usd/b2.usd",
+#     ),
+#     init_state=ArticulationCfg.InitialStateCfg(
+#         pos=(0.0, 0.0, 0.58),
+#         joint_pos={
+#             ".*R_hip_joint": -0.1,
+#             ".*L_hip_joint": 0.1,
+#             "F[L,R]_thigh_joint": 0.8,
+#             "R[L,R]_thigh_joint": 1.0,
+#             ".*_calf_joint": -1.5,
+#         },
+#         joint_vel={".*": 0.0},
+#     ),
+#     actuators={
+#         "M107-24-2": IdealPDActuatorCfg(
+#             joint_names_expr=[".*_hip_.*", ".*_thigh_.*"],
+#             effort_limit=200,
+#             velocity_limit=23,
+#             stiffness=160.0,
+#             damping=5.0,
+#             friction=0.01,
+#         ),
+#         "2": IdealPDActuatorCfg(
+#             joint_names_expr=[".*_calf_.*"],
+#             effort_limit=320,
+#             velocity_limit=14,
+#             stiffness=160.0,
+#             damping=5.0,
+#             friction=0.01,
+#         ),
+#     },
+#     joint_sdk_names=UNITREE_GO2_CFG.joint_sdk_names.copy(),
+# )
 
 UNITREE_H1_CFG = UnitreeArticulationCfg(
-    # spawn=UnitreeUrdfFileCfg(
-    #     asset_path=f"{UNITREE_ROS_DIR}/robots/h1_description/urdf/h1.urdf",
-    # ),
-    spawn=UnitreeUsdFileCfg(
-        usd_path=f"{UNITREE_MODEL_DIR}/H1/h1/usd/h1.usd",
+    spawn=UnitreeUrdfFileCfg(
+        asset_path=f"{UNITREE_ROS_DIR}/robots/h1_description/urdf/h1.urdf",
     ),
+    # spawn=UnitreeUsdFileCfg(
+    #     usd_path=f"{UNITREE_MODEL_DIR}/H1/h1/usd/h1.usd",
+    # ),
     init_state=ArticulationCfg.InitialStateCfg(
         pos=(0.0, 0.0, 1.1),
         joint_pos={
