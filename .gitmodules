@@ -1,0 +1,9 @@
+[submodule "IsaacLab"]
+	path = IsaacLab
+	url = https://github.com/isaac-sim/IsaacLab.git
+[submodule "unitree_ros"]
+	path = unitree_ros
+	url = https://github.com/unitreerobotics/unitree_ros.git
+[submodule "unitree_model"]
+	path = unitree_model
+	url = https://huggingface.co/datasets/unitreerobotics/unitree_model
