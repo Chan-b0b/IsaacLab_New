@@ -27,6 +27,12 @@ struct ArticulationData
 
     // Joint velocities of all joints.
     Eigen::VectorXf joint_vel;
+    
+    // ALL joint positions (27 joints) for observations
+    std::vector<float> all_joint_pos;
+    
+    // ALL joint velocities (27 joints) for observations
+    std::vector<float> all_joint_vel;
 
     // Root angular velocity in base world frame.
     Eigen::Vector3f root_ang_vel_b;

@@ -113,6 +113,7 @@ class UniformVelocityHeightCommandCfg(UniformVelocityCommandCfg):
     """
     
     class_type: type = UniformVelocityHeightCommand
+    """The class type for the command generator."""
 
     @configclass
     class Ranges(UniformVelocityCommandCfg.Ranges):

@@ -7,6 +7,14 @@
 
 """Launch Isaac Sim Simulator first."""
 
+import debugpy
+
+# Initialize debugpy for remote debugging
+debugpy.listen(("0.0.0.0", 5678))
+print("Waiting for debugger to attach on port 5678...")
+debugpy.wait_for_client()
+print("Debugger attached!")
+
 import argparse
 from importlib.metadata import version
 

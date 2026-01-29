@@ -33,10 +33,19 @@ public:
             lowstate->msg_.imu_state().quaternion()[3]
         );
         data.projected_gravity_b = data.root_quat_w.conjugate() * data.GRAVITY_VEC_W;
-        // joint positions and velocities
+        
+        // Store joint positions and velocities for ACTION joints (from joint_ids_map)
         for(int i(0); i< data.joint_ids_map.size(); i++) {
             data.joint_pos[i] = lowstate->msg_.motor_state()[data.joint_ids_map[i]].q();
             data.joint_vel[i] = lowstate->msg_.motor_state()[data.joint_ids_map[i]].dq();
+        }
+        
+        // Store ALL 27 joint states for OBSERVATIONS
+        data.all_joint_pos.resize(27);
+        data.all_joint_vel.resize(27);
+        for(int i = 0; i < 27; i++) {
+            data.all_joint_pos[i] = lowstate->msg_.motor_state()[i].q();
+            data.all_joint_vel[i] = lowstate->msg_.motor_state()[i].dq();
         }
     }
 

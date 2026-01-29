@@ -22,18 +22,34 @@ def format_value(x):
 def export_deploy_cfg(env: ManagerBasedRLEnv, log_dir):
     asset: Articulation = env.scene["robot"]
     joint_sdk_names = env.cfg.scene.robot.joint_sdk_names
-    joint_ids_map, _ = resolve_matching_names(asset.data.joint_names, joint_sdk_names, preserve_order=True)
+    
+    # Get action joint names from the JointPositionAction configuration
+    action_term = env.action_manager._terms.get("JointPositionAction")
+    if action_term is not None:
+        action_joint_names = action_term.cfg.joint_names
+        # Map action joint names to indices in joint_sdk_names (SDK order)
+        action_joint_ids_in_sdk, _ = resolve_matching_names(joint_sdk_names, action_joint_names, preserve_order=True)
+        # Map action joint names to indices in Isaac Sim order
+        action_joint_ids_in_sim, _ = resolve_matching_names(asset.data.joint_names, action_joint_names, preserve_order=True)
+    else:
+        # Fallback if no JointPositionAction
+        action_joint_ids_in_sdk, _ = resolve_matching_names(asset.data.joint_names, joint_sdk_names, preserve_order=True)
+        action_joint_ids_in_sim = action_joint_ids_in_sdk
 
     cfg = {}  # noqa: SIM904
-    cfg["joint_ids_map"] = joint_ids_map
+    # joint_ids_map: Sequential indices for action joints (0, 1, 2, ..., num_action_joints-1)
+    cfg["joint_ids_map"] = list(range(len(action_joint_ids_in_sdk)))
     cfg["step_dt"] = env.cfg.sim.dt * env.cfg.decimation
-    stiffness = np.zeros(len(joint_sdk_names))
-    stiffness[joint_ids_map] = asset.data.default_joint_stiffness[0].detach().cpu().numpy().tolist()
-    cfg["stiffness"] = stiffness.tolist()
-    damping = np.zeros(len(joint_sdk_names))
-    damping[joint_ids_map] = asset.data.default_joint_damping[0].detach().cpu().numpy().tolist()
-    cfg["damping"] = damping.tolist()
-    cfg["default_joint_pos"] = asset.data.default_joint_pos[0].detach().cpu().numpy().tolist()
+    
+    # Extract stiffness, damping, default_joint_pos for action joints only in SDK order
+    stiffness_sim = asset.data.default_joint_stiffness[0].detach().cpu().numpy()
+    damping_sim = asset.data.default_joint_damping[0].detach().cpu().numpy()
+    default_joint_pos_sim = asset.data.default_joint_pos[0].detach().cpu().numpy()
+    
+    # Reorder from Isaac Sim order to SDK order for action joints
+    cfg["stiffness"] = [float(stiffness_sim[action_joint_ids_in_sim[i]]) for i in range(len(action_joint_ids_in_sdk))]
+    cfg["damping"] = [float(damping_sim[action_joint_ids_in_sim[i]]) for i in range(len(action_joint_ids_in_sdk))]
+    cfg["default_joint_pos"] = [float(default_joint_pos_sim[action_joint_ids_in_sim[i]]) for i in range(len(action_joint_ids_in_sdk))]
 
     # --- commands ---
     cfg["commands"] = {}

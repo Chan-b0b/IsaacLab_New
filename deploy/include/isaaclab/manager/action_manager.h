@@ -44,15 +44,17 @@ class ActionManager
 {
 public:
     ActionManager(YAML::Node cfg, ManagerBasedRLEnv* env)
-    : cfg(cfg), env(env)
+    : cfg(cfg), env(env), _action()
     {
         _prepare_terms();
-        _action.resize(total_action_dim(), 0.0f);
+        int dim = total_action_dim();
+        _action.assign(dim, 0.0f);
     }
 
     void reset()
     {
-        _action.assign(total_action_dim(), 0.0f);
+        int dim = total_action_dim();
+        _action = std::vector<float>(dim, 0.0f);
         for(auto & term : _terms)
         {
             term->reset();

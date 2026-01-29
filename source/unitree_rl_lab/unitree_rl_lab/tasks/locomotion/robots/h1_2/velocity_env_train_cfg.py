@@ -19,7 +19,7 @@ class CommandsTrainCfg:
         resampling_time_range=(2.0, 10.0),
         rel_standing_envs=0.05,
         rel_heading_envs=0,
-        rel_walking_envs=0.2,
+        rel_walking_envs=0.9,
         heading_command=False,
         debug_vis=True,
         waist_pitch=-0.2,
@@ -139,14 +139,14 @@ class RewardsTrainCfg:
     )
     
     # -- gait control
-    maintain_default_pose_when_no_gait = RewTerm(
-        func=mdp.maintain_default_pose_when_no_gait,
-        weight=-2.0,
-        params={
-            "command_name": "base_velocity",
-            "asset_cfg": SceneEntityCfg("robot", joint_names=[".*"]),
-        },
-    )
+    # maintain_default_pose_when_no_gait = RewTerm(
+    #     func=mdp.maintain_default_pose_when_no_gait,
+    #     weight=-2.0,
+    #     params={
+    #         "command_name": "base_velocity",
+    #         "asset_cfg": SceneEntityCfg("robot", joint_names=[".*"]),
+    #     },
+    # )
 
 
 @configclass
@@ -166,3 +166,17 @@ class RobotTrainEnvCfg(RobotEnvCfg):
         # Training-specific settings
         self.scene.num_envs = 4096
         self.episode_length_s = 20.0
+
+
+@configclass
+class RobotTrainPlayEnvCfg(RobotTrainEnvCfg):
+    """Play configuration for H1-2 velocity training environment."""
+    
+    def __post_init__(self):
+        """Post initialization."""
+        super().__post_init__()
+        
+        # Play-specific settings
+        self.scene.num_envs = 32
+        self.scene.terrain.terrain_generator.num_rows = 2
+        self.scene.terrain.terrain_generator.num_cols = 10

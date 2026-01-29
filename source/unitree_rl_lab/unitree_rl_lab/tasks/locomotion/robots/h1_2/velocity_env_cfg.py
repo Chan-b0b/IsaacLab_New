@@ -202,6 +202,20 @@ class ActionsCfg:
                                            )
 
 
+# Mujoco joint order (matches h1_2_handless.xml actuator sequence)
+MUJOCO_JOINT_NAMES = [
+    "left_hip_yaw_joint", "left_hip_pitch_joint", "left_hip_roll_joint",
+    "left_knee_joint", "left_ankle_pitch_joint", "left_ankle_roll_joint",
+    "right_hip_yaw_joint", "right_hip_pitch_joint", "right_hip_roll_joint",
+    "right_knee_joint", "right_ankle_pitch_joint", "right_ankle_roll_joint",
+    "torso_joint",
+    "left_shoulder_pitch_joint", "left_shoulder_roll_joint", "left_shoulder_yaw_joint",
+    "left_elbow_joint", "left_wrist_roll_joint", "left_wrist_pitch_joint", "left_wrist_yaw_joint",
+    "right_shoulder_pitch_joint", "right_shoulder_roll_joint", "right_shoulder_yaw_joint",
+    "right_elbow_joint", "right_wrist_roll_joint", "right_wrist_pitch_joint", "right_wrist_yaw_joint",
+]
+
+
 @configclass
 class ObservationsCfg:
     """Observation specifications for the MDP."""
@@ -214,8 +228,17 @@ class ObservationsCfg:
         base_ang_vel = ObsTerm(func=mdp.base_ang_vel, scale=0.2, noise=Unoise(n_min=-0.2, n_max=0.2))
         projected_gravity = ObsTerm(func=mdp.projected_gravity, noise=Unoise(n_min=-0.05, n_max=0.05))
         velocity_commands = ObsTerm(func=mdp.generated_commands, params={"command_name": "base_velocity"})
-        joint_pos_rel = ObsTerm(func=mdp.joint_pos_rel, noise=Unoise(n_min=-0.01, n_max=0.01))
-        joint_vel_rel = ObsTerm(func=mdp.joint_vel_rel, scale=0.05, noise=Unoise(n_min=-1.5, n_max=1.5))
+        joint_pos_rel = ObsTerm(
+            func=mdp.joint_pos_rel, 
+            params={"asset_cfg": SceneEntityCfg("robot", joint_names=MUJOCO_JOINT_NAMES, preserve_order=True)},
+            noise=Unoise(n_min=-0.01, n_max=0.01)
+        )
+        joint_vel_rel = ObsTerm(
+            func=mdp.joint_vel_rel, 
+            params={"asset_cfg": SceneEntityCfg("robot", joint_names=MUJOCO_JOINT_NAMES, preserve_order=True)},
+            scale=0.05, 
+            noise=Unoise(n_min=-1.5, n_max=1.5)
+        )
         last_action = ObsTerm(func=mdp.last_action, params={"action_name": "JointPositionAction"})
         gait_phase = ObsTerm(func=mdp.gait_phase, params={"period": 0.8})
 
@@ -235,9 +258,20 @@ class ObservationsCfg:
         base_ang_vel = ObsTerm(func=mdp.base_ang_vel, scale=0.2)
         projected_gravity = ObsTerm(func=mdp.projected_gravity)
         velocity_commands = ObsTerm(func=mdp.generated_commands, params={"command_name": "base_velocity"})
-        joint_pos_rel = ObsTerm(func=mdp.joint_pos_rel)
-        joint_vel_rel = ObsTerm(func=mdp.joint_vel_rel, scale=0.05)
-        joint_effort = ObsTerm(func=mdp.joint_effort, scale=0.01)
+        joint_pos_rel = ObsTerm(
+            func=mdp.joint_pos_rel,
+            params={"asset_cfg": SceneEntityCfg("robot", joint_names=MUJOCO_JOINT_NAMES, preserve_order=True)}
+        )
+        joint_vel_rel = ObsTerm(
+            func=mdp.joint_vel_rel, 
+            params={"asset_cfg": SceneEntityCfg("robot", joint_names=MUJOCO_JOINT_NAMES, preserve_order=True)},
+            scale=0.05
+        )
+        joint_effort = ObsTerm(
+            func=mdp.joint_effort,
+            params={"asset_cfg": SceneEntityCfg("robot", joint_names=MUJOCO_JOINT_NAMES, preserve_order=True)},
+            scale=0.01
+        )
         last_action = ObsTerm(func=mdp.last_action, params={"action_name": "JointPositionAction"})
         gait_phase = ObsTerm(func=mdp.gait_phase, params={"period": 0.8})
         # height_scanner = ObsTerm(func=mdp.height_scan,

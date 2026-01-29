@@ -9,7 +9,7 @@ FSM:
       type: RLBase
   Passive:
     transitions: 
-      FixStand: LT + up.on_pressed
+      FixStand: b.on_pressed
     mode: [ # motor mode
       10,10,10,10,1,1,
       10,10,10,10,1,1,
@@ -27,8 +27,8 @@ FSM:
     ]
   FixStand:
     transitions: 
-      Passive: LT + B.on_pressed
-      Velocity: RB + X.on_pressed
+      Passive: a.on_pressed
+      Velocity: x.on_pressed
     kp: [
       250, 250, 250, 400, 80, 40,
       250, 250, 250, 400, 80, 40,
@@ -55,5 +55,5 @@ FSM:
     ]
   Velocity:
     transitions: 
-      Passive: LT + B.on_pressed
-    policy_dir: ../../../logs/rsl_rl/unitree_h1_2_velocity
+      Passive: a.on_pressed
+    policy_dir: /home/lgcns/Humanoid/IsaacLab_New/logs/rsl_rl/unitree_h1_2_velocity_train/2026-01-29_21-15-41

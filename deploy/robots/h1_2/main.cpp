@@ -5,7 +5,7 @@
 
 std::unique_ptr<LowCmd_t> FSMState::lowcmd = nullptr;
 std::shared_ptr<LowState_t> FSMState::lowstate = nullptr;
-std::shared_ptr<Keyboard> FSMState::keyboard = nullptr;
+std::shared_ptr<Keyboard> FSMState::keyboard = std::make_shared<Keyboard>();
 
 void init_fsm_state()
 {
@@ -47,9 +47,11 @@ int main(int argc, char** argv)
     auto fsm = std::make_unique<CtrlFSM>(param::config["FSM"]);
     fsm->start();
 
-    std::cout << "Press [L2 + Up] to enter FixStand mode.\n";
-    std::cout << "And then press [R1 + X] to start controlling the robot.\n";
+    std::cout << "Press [A] to enter Passive mode.\n";
+    std::cout << "Press [B] to enter FixStand mode.\n";
+    std::cout << "Press [X] to enter Velocity mode.\n";
 
+    // FSM is running in its own thread, just keep main alive
     while (true)
     {
         sleep(1);

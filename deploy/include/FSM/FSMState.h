@@ -56,7 +56,32 @@ public:
     void pre_run()
     {
         lowstate->update();
-        if(keyboard) keyboard->update();
+        
+        // Update keyboard and map to joystick buttons
+        if(keyboard) {
+            keyboard->update();
+            std::string key = keyboard->key();
+            
+            // Map keyboard keys to joystick buttons
+            // Use keyboard on_pressed to only trigger on key press, not hold
+            if (keyboard->on_pressed) {
+                if (key == "a") {
+                    lowstate->joystick.A(1);
+                    spdlog::debug("Key 'a' pressed - A button activated");
+                } else if (key == "b") {
+                    lowstate->joystick.B(1);
+                    spdlog::debug("Key 'b' pressed - B button activated");
+                } else if (key == "x") {
+                    lowstate->joystick.X(1);
+                    spdlog::debug("Key 'x' pressed - X button activated");
+                }
+            } else if (keyboard->on_released) {
+                // Release all buttons when key is released
+                lowstate->joystick.A(0);
+                lowstate->joystick.B(0);
+                lowstate->joystick.X(0);
+            }
+        }
     }
 
     void post_run()

@@ -1,0 +1,59 @@
+# Joint mapping from Isaac Lab training order to SDK order
+# For H1-2 handless, first 12 joints match exactly (legs only)
+joint_ids_map: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+
+# Control frequency
+step_dt: 0.02
+
+# PD gains - must match training configuration
+stiffness: [150.0, 150.0, 150.0, 200.0, 40.0, 40.0,  # left leg
+            150.0, 150.0, 150.0, 200.0, 40.0, 40.0]  # right leg
+
+damping: [2.0, 2.0, 2.0, 4.0, 2.0, 2.0,  # left leg
+          2.0, 2.0, 2.0, 4.0, 2.0, 2.0]  # right leg
+
+# Default joint positions (standing pose from training)
+default_joint_pos: [0.0, -0.1, 0.0, 0.3, -0.2, 0.0,  # left leg
+                    0.0, -0.1, 0.0, 0.3, -0.2, 0.0]  # right leg
+
+# Command ranges for velocity control
+commands:
+  base_velocity:
+    ranges:
+      lin_vel_x: [-0.5, 1.0]
+      lin_vel_y: [-0.3, 0.3]
+      ang_vel_z: [-0.4, 0.4]
+      heading: null
+
+# Action configuration
+actions:
+  JointPositionAction:
+    clip: null
+    joint_names: [.*]
+    scale: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5,  # left leg
+            0.5, 0.5, 0.5, 0.5, 0.5, 0.5]  # right leg
+    offset: [0.0, -0.1, 0.0, 0.3, -0.2, 0.0,  # left leg
+             0.0, -0.1, 0.0, 0.3, -0.2, 0.0]  # right leg
+    joint_ids: null
+
+# Observation configuration
+observations:
+  policy:
+    base_ang_vel:
+      scale: 0.2
+      noise:
+        n_min: -0.2
+        n_max: 0.2
+    projected_gravity:
+      noise:
+        n_min: -0.05
+        n_max: 0.05
+    joint_pos_rel:
+      noise:
+        n_min: -0.01
+        n_max: 0.01
+    joint_vel_rel:
+      scale: 0.05
+      noise:
+        n_min: -1.5
+        n_max: 1.5

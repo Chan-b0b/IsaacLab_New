@@ -66,7 +66,8 @@ public:
         auto& group_terms = group_obs_term_cfgs_.at(group_name);
 
         for(auto & term : group_terms) {
-            term.add(term.func(this->env, term.params));
+            auto raw_obs = term.func(this->env, term.params);
+            term.add(raw_obs);
         }
 
         if(use_gym_history)
@@ -88,6 +89,7 @@ public:
                 obs.insert(obs.end(), obs_.begin(), obs_.end());
             }
         }
+        
         return obs;
     }
 
