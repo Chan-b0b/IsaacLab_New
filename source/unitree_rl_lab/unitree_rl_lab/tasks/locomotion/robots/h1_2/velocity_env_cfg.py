@@ -217,7 +217,7 @@ class ObservationsCfg:
         joint_pos_rel = ObsTerm(func=mdp.joint_pos_rel, noise=Unoise(n_min=-0.01, n_max=0.01))
         joint_vel_rel = ObsTerm(func=mdp.joint_vel_rel, scale=0.05, noise=Unoise(n_min=-1.5, n_max=1.5))
         last_action = ObsTerm(func=mdp.last_action, params={"action_name": "JointPositionAction"})
-        gait_phase = ObsTerm(func=mdp.gait_phase, params={"period": 0.6})
+        gait_phase = ObsTerm(func=mdp.gait_phase, params={"period": 0.8})
 
         def __post_init__(self):
             # self.history_length = 5
@@ -239,7 +239,7 @@ class ObservationsCfg:
         joint_vel_rel = ObsTerm(func=mdp.joint_vel_rel, scale=0.05)
         joint_effort = ObsTerm(func=mdp.joint_effort, scale=0.01)
         last_action = ObsTerm(func=mdp.last_action, params={"action_name": "JointPositionAction"})
-        gait_phase = ObsTerm(func=mdp.gait_phase, params={"period": 0.6})
+        gait_phase = ObsTerm(func=mdp.gait_phase, params={"period": 0.8})
         # height_scanner = ObsTerm(func=mdp.height_scan,
         #     params={"sensor_cfg": SceneEntityCfg("height_scanner")},
         #     clip=(-1.0, 5.0),
@@ -286,7 +286,6 @@ class RewardsCfg:
                     ".*_shoulder_roll.*",
                     ".*_shoulder_yaw.*",
                     ".*_elbow.*",
-                    ".*_wrist.*",
                 ],
             )
         },
@@ -300,22 +299,6 @@ class RewardsCfg:
         func=mdp.joint_deviation_l1,
         weight=-1.0,
         params={"asset_cfg": SceneEntityCfg("robot", joint_names=[".*_hip_roll_joint", ".*_hip_yaw_joint"])},
-    )
-    joint_deviation_fingers = RewTerm(
-        func=mdp.joint_deviation_l1,
-        weight=-0.5,
-        params={
-            "asset_cfg": SceneEntityCfg(
-                "robot",
-                joint_names=[
-                    ".*_thumb.*",
-                    ".*_index.*",
-                    ".*_middle.*",
-                    ".*_ring.*",
-                    ".*_pinky.*",
-                ],
-            )
-        },
     )
 
     # -- robot

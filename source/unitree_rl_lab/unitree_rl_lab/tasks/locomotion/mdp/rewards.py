@@ -205,6 +205,84 @@ Other rewards.
 """
 
 
+def maintain_default_pose_when_no_gait(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")
+) -> torch.Tensor:
+    """Reward maintaining default pose when walking command is 0.
+    
+    This reward enforces that when command[3] (walking_binary) = 0, the robot should
+    maintain its default joint configuration (standing pose without gait).
+    
+    Args:
+        env: The environment.
+        command_name: The name of the command (should have walking_binary at index 3).
+        asset_cfg: The asset configuration.
+    
+    Returns:
+        Penalty for deviating from default pose when standing is commanded.
+    """
+    # Get the walking binary command (index 3: 0 = no gait, 1 = use gait)
+    command = env.command_manager.get_command(command_name)
+    walking_binary = command[:, 3]
+    
+    # Get asset
+    asset: Articulation = env.scene[asset_cfg.name]
+    
+    # Compute deviation from default pose
+    joint_pos_error = torch.sum(
+        torch.abs(asset.data.joint_pos[:, asset_cfg.joint_ids] - asset.data.default_joint_pos[:, asset_cfg.joint_ids]),
+        dim=1
+    )
+    
+    # Penalize deviation only when walking_binary = 0 (should maintain default pose)
+    penalty = joint_pos_error * (1.0 - walking_binary)
+    
+    return penalty
+
+
+def no_gait_when_commanded(
+    env: ManagerBasedRLEnv, 
+    command_name: str,
+    sensor_cfg: SceneEntityCfg,
+    threshold: float = 10.0
+) -> torch.Tensor:
+    """Penalize gait motion (contact switching) when walking command is 0.
+    
+    This reward enforces that when command[3] (walking_binary) = 0, the robot should
+    stand still without gait motion. It penalizes contact force changes on the feet.
+    
+    Args:
+        env: The environment.
+        command_name: The name of the command (should have walking_binary at index 3).
+        sensor_cfg: The contact sensor configuration for feet.
+        threshold: Contact force threshold to consider a foot in contact.
+    
+    Returns:
+        Penalty for gait motion when standing is commanded.
+    """
+    # Get the walking binary command (index 3: 0 = no gait, 1 = use gait)
+    command = env.command_manager.get_command(command_name)
+    walking_binary = command[:, 3]
+    
+    # Get contact sensor data
+    contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
+    
+    # Detect contact changes (gait motion) by comparing current and previous contacts
+    net_contact_forces = contact_sensor.data.net_forces_w_history
+    current_contacts = torch.max(torch.norm(net_contact_forces[:, -1, sensor_cfg.body_ids], dim=-1), dim=-1)[0] > threshold
+    prev_contacts = torch.max(torch.norm(net_contact_forces[:, -2, sensor_cfg.body_ids], dim=-1), dim=-1)[0] > threshold
+    
+    # Contact switching indicates gait motion
+    contact_changed = (current_contacts != prev_contacts).float()
+    
+    # Penalize contact switching when walking_binary = 0 (should not use gait)
+    penalty = contact_changed * (1.0 - walking_binary)
+    
+    return penalty
+
+
 def joint_mirror(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg, mirror_joints: list[list[str]]) -> torch.Tensor:
     # extract the used quantities (to enable type-hinting)
     asset: Articulation = env.scene[asset_cfg.name]

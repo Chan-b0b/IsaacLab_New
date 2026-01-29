@@ -17,9 +17,10 @@ from isaaclab.utils import configclass
 
 from unitree_rl_lab.assets.robots import unitree_actuators
 
-UNITREE_MODEL_DIR = "/home/unitree_rl_lab/unitree_model"  # Replace with the actual path to your unitree_model directory
-UNITREE_ROS_DIR = "/home/unitree_rl_lab/unitree_ros"  # Replace with the actual path to your unitree_ros package
-
+# UNITREE_MODEL_DIR = "/home/unitree_rl_lab/unitree_model"  # Replace with the actual path to your unitree_model directory
+# UNITREE_ROS_DIR = "/home/unitree_rl_lab/unitree_ros"  # Replace with the actual path to your unitree_ros package
+UNITREE_MODEL_DIR = "/home/lgcns/Humanoid/IsaacLab_New/unitree_model"
+UNITREE_ROS_DIR = "/home/lgcns/Humanoid/IsaacLab_New/unitree_ros" 
 
 @configclass
 class UnitreeArticulationCfg(ArticulationCfg):
@@ -431,7 +432,7 @@ UNITREE_H1_2_HANDLESS_CFG = UnitreeArticulationCfg(
     ),
     # spawn=UnitreeUsdFileCfg(
     #     usd_path=f"{UNITREE_MODEL_DIR}/H1-2/h1_2_handless/h1_2_handless.usd",
-    #     activate_contact_sensors=False,
+    #     activate_contact_sensors=True,
     # ),
     init_state=ArticulationCfg.InitialStateCfg(
         pos=(0.0, 0.0, 1.0),
@@ -520,10 +521,16 @@ UNITREE_H1_2_HANDLESS_CFG = UnitreeArticulationCfg(
         "left_shoulder_roll_joint",
         "left_shoulder_yaw_joint",
         "left_elbow_joint",
+        "left_wrist_roll_joint",
+        "left_wrist_pitch_joint",
+        "left_wrist_yaw_joint",
         "right_shoulder_pitch_joint",
         "right_shoulder_roll_joint",
         "right_shoulder_yaw_joint",
         "right_elbow_joint",
+        "right_wrist_roll_joint",
+        "right_wrist_pitch_joint",
+        "right_wrist_yaw_joint",
     ],
 )
 
