@@ -56,4 +56,4 @@ FSM:
   Velocity:
     transitions: 
       Passive: a.on_pressed
-    policy_dir: /home/lgcns/Humanoid/IsaacLab_New/logs/rsl_rl/unitree_h1_2_velocity_train/2026-01-29_21-15-41
+    policy_dir: /home/lgcns/Humanoid/IsaacLab_New/logs/rsl_rl/unitree_h1_2_velocity_train/2026-02-02_18-43-08

@@ -2,6 +2,7 @@
 
 import math
 
+from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.utils import configclass
@@ -19,7 +20,7 @@ class CommandsTrainCfg:
         resampling_time_range=(2.0, 10.0),
         rel_standing_envs=0.05,
         rel_heading_envs=0,
-        rel_walking_envs=0.9,
+        rel_walking_envs=0.95,
         heading_command=False,
         debug_vis=True,
         waist_pitch=-0.2,
@@ -93,7 +94,7 @@ class RewardsTrainCfg:
     # -- feet
     gait = RewTerm(
         func=mdp.feet_gait,
-        weight=0.5,
+        weight=3,
         params={
             "period": 0.8,
             "offset": [0.0, 0.5],
@@ -111,7 +112,7 @@ class RewardsTrainCfg:
     )
     feet_clearance = RewTerm(
         func=mdp.foot_clearance_reward,
-        weight=20.0,
+        weight=5.0,
         params={
             "std": 0.05,
             "tanh_mult": 2.0,
@@ -166,6 +167,10 @@ class RobotTrainEnvCfg(RobotEnvCfg):
         # Training-specific settings
         self.scene.num_envs = 4096
         self.episode_length_s = 20.0
+        
+        # Override push_robot event parameters for training
+        self.events.push_robot.interval_range_s = (2.0, 8.0)
+        self.events.push_robot.params["velocity_range"] = {"x": (-0.5, 0.5), "y": (-0.5, 0.5)}
 
 
 @configclass
@@ -180,3 +185,8 @@ class RobotTrainPlayEnvCfg(RobotTrainEnvCfg):
         self.scene.num_envs = 32
         self.scene.terrain.terrain_generator.num_rows = 2
         self.scene.terrain.terrain_generator.num_cols = 10
+
+        self.commands.base_velocity.ranges.lin_vel_x = (-0.5, 0.5)
+        self.commands.base_velocity.ranges.lin_vel_y = (-0.5, 0.5)
+        self.commands.base_velocity.ranges.ang_vel_z = (-0.3, 0.3)
+

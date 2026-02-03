@@ -156,6 +156,21 @@ class EventCfg:
         params={"velocity_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5)}},
     )
 
+    # Apply constant force to torso at random intervals
+    apply_torso_force = EventTerm(
+        func=mdp.apply_constant_force_to_torso,
+        mode="interval",
+        interval_range_s=(3.0, 8.0),  # Random duration between 3 and 8 seconds
+        params={
+            "asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
+            "force_range": {
+                "x": (-30.0, 30.0),
+                "y": (-30.0, 30.0),
+                "z": (-10.0, 10.0),
+            },
+        },
+    )
+
 
 @configclass
 class CommandsCfg:
