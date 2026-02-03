@@ -26,6 +26,12 @@ State_RLBase::State_RLBase(int state_mode, std::string state_string)
 
 void State_RLBase::run()
 {
+    // Initialize all motors to their default positions (upper body stays at defaults)
+    for(int i = 0; i < env->robot->data.default_joint_pos.size(); i++) {
+        lowcmd->msg_.motor_cmd()[i].q() = env->robot->data.default_joint_pos[i];
+    }
+    
+    // Apply policy actions to the controlled joints (legs) only
     auto action = env->action_manager->processed_actions();
     for(int i(0); i < env->robot->data.joint_ids_map.size(); i++) {
         lowcmd->msg_.motor_cmd()[env->robot->data.joint_ids_map[i]].q() = action[i];

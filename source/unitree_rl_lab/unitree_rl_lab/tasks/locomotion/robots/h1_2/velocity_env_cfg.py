@@ -148,6 +148,13 @@ class EventCfg:
         },
     )
 
+    # Set all joint targets to default (including upper body) to hold them steady
+    reset_joint_targets = EventTerm(
+        func=mdp.reset_scene_to_default,
+        mode="reset",
+        params={"reset_joint_targets": True},
+    )
+
     # interval
     push_robot = EventTerm(
         func=mdp.push_by_setting_velocity,

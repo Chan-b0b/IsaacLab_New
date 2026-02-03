@@ -60,21 +60,22 @@ class RewardsTrainCfg:
     action_smoothness = RewTerm(func=mdp.action_smoothness_l2, weight=-0.01)
     dof_pos_limits = RewTerm(func=mdp.joint_pos_limits, weight=-5.0)
 
-    joint_deviation_arms = RewTerm(
-        func=mdp.joint_deviation_l1,
-        weight=-1.0,
-        params={
-            "asset_cfg": SceneEntityCfg(
-                "robot",
-                joint_names=[
-                    ".*_shoulder_pitch.*",
-                    ".*_shoulder_roll.*",
-                    ".*_shoulder_yaw.*",
-                    ".*_elbow.*"
-                    ],
-            )
-        },
-    )
+    # joint_deviation_arms = RewTerm(
+    #     func=mdp.joint_deviation_l1,
+    #     weight=-1.0,
+    #     params={
+    #         "asset_cfg": SceneEntityCfg(
+    #             "robot",
+    #             joint_names=[
+    #                 ".*_shoulder_pitch.*",
+    #                 ".*_shoulder_roll.*",
+    #                 ".*_shoulder_yaw.*",
+    #                 ".*_elbow.*"
+    #                 ],
+    #         )
+    #     },
+    # )
+    
     joint_deviation_torso = RewTerm(
         func=mdp.joint_deviation_l1,
         weight=-1.0,
@@ -89,7 +90,16 @@ class RewardsTrainCfg:
 
     # -- robot
     flat_orientation_l2 = RewTerm(func=mdp.flat_orientation_l2, weight=-1.0)
-    base_height = RewTerm(func=mdp.base_height_l2, weight=-10, params={"target_height": 0.9})
+    
+    base_height = RewTerm(
+        func=mdp.track_height_exp, 
+        weight=1.0, 
+        params={
+            "command_name": "base_velocity", 
+            "std": math.sqrt(0.25),
+            "sensor_cfg": SceneEntityCfg("height_scanner")
+        }
+    )
 
     # -- feet
     gait = RewTerm(

@@ -9,10 +9,54 @@ except ImportError:
     from isaaclab.utils.math import quat_rotate_inverse as quat_apply_inverse
 from isaaclab.assets import Articulation, RigidObject
 from isaaclab.managers import SceneEntityCfg
-from isaaclab.sensors import ContactSensor
+from isaaclab.sensors import ContactSensor, RayCaster
 
 if TYPE_CHECKING:
     from isaaclab.envs import ManagerBasedRLEnv
+
+"""
+Velocity and height tracking rewards.
+"""
+
+
+def track_height_exp(
+    env: ManagerBasedRLEnv, 
+    std: float, 
+    command_name: str, 
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    sensor_cfg: SceneEntityCfg | None = None,
+) -> torch.Tensor:
+    """Reward tracking of height commands using exponential kernel.
+    
+    Args:
+        env: The environment.
+        std: The standard deviation for the exponential kernel.
+        command_name: The name of the command term that contains height at index 3.
+        asset_cfg: The asset configuration.
+        sensor_cfg: The height scanner sensor configuration for terrain-relative height.
+    
+    Returns:
+        The reward for tracking the height command.
+    """
+    
+    # extract the used quantities (to enable type-hinting)
+    asset: RigidObject = env.scene[asset_cfg.name]
+    # get height command (index 3 in the command)
+    height_command = env.command_manager.get_command(command_name)[:, 3]
+    
+    # Adjust height command for terrain if sensor is provided
+    if sensor_cfg is not None:
+        sensor: RayCaster = env.scene[sensor_cfg.name]
+        # Adjust the height command using the sensor data (terrain height)
+        adjusted_height_command = height_command + torch.mean(sensor.data.ray_hits_w[..., 2], dim=1)
+    else:
+        # Use the height command directly for flat terrain
+        adjusted_height_command = height_command
+    
+    # compute the error
+    height_error = torch.square(asset.data.root_pos_w[:, 2] - adjusted_height_command)
+    return torch.exp(-height_error / std**2)
+
 
 """
 Joint penalties.

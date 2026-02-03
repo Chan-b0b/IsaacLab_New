@@ -48,11 +48,15 @@ def export_deploy_cfg(env: ManagerBasedRLEnv, log_dir):
     stiffness_sim = asset.data.default_joint_stiffness[0].detach().cpu().numpy()
     damping_sim = asset.data.default_joint_damping[0].detach().cpu().numpy()
     default_joint_pos_sim = asset.data.default_joint_pos[0].detach().cpu().numpy()
+    joint_pos_limits_sim = asset.data.soft_joint_pos_limits[0].detach().cpu().numpy()
     
-    # Reorder from Isaac Sim order to SDK order for all 27 joints
+    # Reorder from Isaac Sim order to SDK order for all joints
     cfg["stiffness"] = [float(stiffness_sim[all_joint_ids_in_sim[i]]) for i in range(len(joint_sdk_names))]
     cfg["damping"] = [float(damping_sim[all_joint_ids_in_sim[i]]) for i in range(len(joint_sdk_names))]
     cfg["default_joint_pos"] = [float(default_joint_pos_sim[all_joint_ids_in_sim[i]]) for i in range(len(joint_sdk_names))]
+    cfg["joint_pos_limits"] = [[float(joint_pos_limits_sim[all_joint_ids_in_sim[i], 0]), 
+                                  float(joint_pos_limits_sim[all_joint_ids_in_sim[i], 1])] 
+                                 for i in range(len(joint_sdk_names))]
 
     # --- commands ---
     cfg["commands"] = {}
