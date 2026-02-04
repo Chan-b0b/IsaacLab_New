@@ -56,8 +56,8 @@ class RewardsTrainCfg:
     base_linear_velocity = RewTerm(func=mdp.lin_vel_z_l2, weight=-2.0)
     base_angular_velocity = RewTerm(func=mdp.ang_vel_xy_l2, weight=-0.5)
     joint_acc = RewTerm(func=mdp.joint_acc_l2, weight=-2.5e-7)
-    action_rate = RewTerm(func=mdp.action_rate_l2, weight=-0.05)
-    action_smoothness = RewTerm(func=mdp.action_smoothness_l2, weight=-0.01)
+    action_rate = RewTerm(func=mdp.action_rate_l2, weight=-0.1)
+    action_smoothness = RewTerm(func=mdp.action_smoothness_l2, weight=-0.05)
     dof_pos_limits = RewTerm(func=mdp.joint_pos_limits, weight=-5.0)
 
     # joint_deviation_arms = RewTerm(
@@ -122,19 +122,19 @@ class RewardsTrainCfg:
     )
     feet_clearance = RewTerm(
         func=mdp.foot_clearance_reward,
-        weight=5.0,
+        weight=3.0,
         params={
-            "std": 0.05,
-            "tanh_mult": 2.0,
+            "std": 0.08,
+            "tanh_mult": 1.5,
             "target_height": 0.15,
             "asset_cfg": SceneEntityCfg("robot", body_names=".*ankle.*"),
         },
     )
     feet_contact_forces = RewTerm(
         func=mdp.contact_forces,
-        weight=-0.0002,
+        weight=-0.001,
         params={
-            "threshold": 500,
+            "threshold": 300,
             "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*ankle.*"),
         },
     )

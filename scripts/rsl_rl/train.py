@@ -7,13 +7,17 @@
 
 """Launch Isaac Sim Simulator first."""
 
-import debugpy
+import os
+# Fix CUDA device enumeration issue - limit to available GPUs
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0,1,2,3,4,5")
 
-# Initialize debugpy for remote debugging
-debugpy.listen(("0.0.0.0", 5678))
-print("Waiting for debugger to attach on port 5678...")
-debugpy.wait_for_client()
-print("Debugger attached!")
+# import debugpy
+
+# # Initialize debugpy for remote debugging
+# debugpy.listen(("0.0.0.0", 5678))
+# print("Waiting for debugger to attach on port 5678...")
+# debugpy.wait_for_client()
+# print("Debugger attached!")
 
 import gymnasium as gym
 import pathlib
@@ -219,3 +223,7 @@ if __name__ == "__main__":
     main()
     # close sim app
     simulation_app.close()
+
+
+# python scripts/rsl_rl/train.py --headless --task Unitree-H1-2-Velocity-Train --num_envs 9096 --run_name H200 --max_iterations 50000 --video --video_length 200 --video_interval 2000 --distributed --max_iterations 50000 --device cuda:0,cuda:1,cuda:2,cuda:3
+# CUDA_VISIBLE_DEVICES=0,1,2,3,4,5 
