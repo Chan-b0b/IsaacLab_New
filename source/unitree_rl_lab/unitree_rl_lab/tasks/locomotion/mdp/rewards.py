@@ -249,6 +249,22 @@ Other rewards.
 """
 
 
+def action_smoothness_l2(env: ManagerBasedRLEnv) -> torch.Tensor:
+    """Penalize lack of smoothness in actions using L2 squared kernel on second differences.
+    
+    Computes sum((action - 2*prev_action + prev_prev_action)^2) for each environment.
+    Requires env.action_manager to have .action, .prev_action, .prev_prev_action attributes.
+    
+    Returns:
+        Tensor of shape [num_envs] with smoothness penalty.
+    """
+    action = env.action_manager.action
+    prev_action = env.action_manager.prev_action
+    prev_prev_action = env.action_manager.prev_prev_action
+    second_diff = action - 2 * prev_action + prev_prev_action
+    return torch.sum(torch.square(second_diff), dim=1)
+
+
 def maintain_default_pose_when_no_gait(
     env: ManagerBasedRLEnv,
     command_name: str,

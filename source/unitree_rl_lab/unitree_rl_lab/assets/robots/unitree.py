@@ -19,8 +19,8 @@ from unitree_rl_lab.assets.robots import unitree_actuators
 
 # UNITREE_MODEL_DIR = "/home/unitree_rl_lab/unitree_model"  # Replace with the actual path to your unitree_model directory
 # UNITREE_ROS_DIR = "/home/unitree_rl_lab/unitree_ros"  # Replace with the actual path to your unitree_ros package
-UNITREE_MODEL_DIR = "/home/unitree_model"
-UNITREE_ROS_DIR = "/home/unitree_ros" 
+UNITREE_MODEL_DIR = "/home/maverick/Humanoid/IsaacLab_New/unitree_model"
+UNITREE_ROS_DIR = "/home/maverick/Humanoid/IsaacLab_New/unitree_ros" 
 
 @configclass
 class UnitreeArticulationCfg(ArticulationCfg):

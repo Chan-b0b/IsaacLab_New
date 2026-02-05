@@ -104,7 +104,7 @@ class RewardsTrainCfg:
     # -- feet
     gait = RewTerm(
         func=mdp.feet_gait,
-        weight=3,
+        weight=1.5,
         params={
             "period": 0.8,
             "offset": [0.0, 0.5],
@@ -132,7 +132,7 @@ class RewardsTrainCfg:
     )
     feet_contact_forces = RewTerm(
         func=mdp.contact_forces,
-        weight=-0.001,
+        weight=-0.002,
         params={
             "threshold": 300,
             "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*ankle.*"),
