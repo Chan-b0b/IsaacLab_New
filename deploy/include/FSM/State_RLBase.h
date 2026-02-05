@@ -14,9 +14,10 @@ public:
     
     void enter()
     {
-        // set gain
+        // set gain and mode
         for (int i = 0; i < env->robot->data.joint_stiffness.size(); ++i)
         {
+            lowcmd->msg_.motor_cmd()[i].mode() = 0;  // 0 = servo mode for real robot
             lowcmd->msg_.motor_cmd()[i].kp() = env->robot->data.joint_stiffness[i];
             lowcmd->msg_.motor_cmd()[i].kd() = env->robot->data.joint_damping[i];
             lowcmd->msg_.motor_cmd()[i].dq() = 0;
