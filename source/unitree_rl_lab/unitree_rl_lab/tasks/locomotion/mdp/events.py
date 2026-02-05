@@ -17,6 +17,7 @@ def apply_constant_force_to_torso(
     env_ids: torch.Tensor,
     asset_cfg: SceneEntityCfg,
     force_range: dict[str, tuple[float, float]],
+    zero_force_percentage: float = 0.0,
 ):
     """Apply a constant force to the torso for a random duration.
     
@@ -28,6 +29,7 @@ def apply_constant_force_to_torso(
         env_ids: The environment IDs to apply the force to.
         asset_cfg: The scene entity configuration for the robot asset.
         force_range: Dictionary with keys 'x', 'y', 'z' specifying force ranges in Newton.
+        zero_force_percentage: Percentage (0.0 to 1.0) of environments that should receive zero force.
     """
     # Extract the asset
     asset: Articulation = env.scene[asset_cfg.name]
@@ -42,6 +44,11 @@ def apply_constant_force_to_torso(
     forces[:, :, 0].uniform_(force_range["x"][0], force_range["x"][1])
     forces[:, :, 1].uniform_(force_range["y"][0], force_range["y"][1])
     forces[:, :, 2].uniform_(force_range["z"][0], force_range["z"][1])
+    
+    # Zero out forces for selected percentage of environments
+    if zero_force_percentage > 0.0:
+        zero_mask = torch.rand(len(env_ids), device=asset.device) < zero_force_percentage
+        forces[zero_mask] *= 0
     
     # Apply the forces to the torso
     asset.permanent_wrench_composer.set_forces_and_torques(

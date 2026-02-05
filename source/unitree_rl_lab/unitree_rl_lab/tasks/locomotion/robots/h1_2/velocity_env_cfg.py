@@ -175,6 +175,7 @@ class EventCfg:
                 "y": (-30.0, 30.0),
                 "z": (-10.0, 10.0),
             },
+            "zero_force_percentage": 0.5,  # 30% of environments receive zero force
         },
     )
 

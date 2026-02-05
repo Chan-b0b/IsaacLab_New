@@ -226,4 +226,5 @@ if __name__ == "__main__":
 
 
 # python scripts/rsl_rl/train.py --headless --task Unitree-H1-2-Velocity-Train --num_envs 9096 --run_name H200 --max_iterations 50000 --video --video_length 200 --video_interval 2000 --distributed --max_iterations 50000 --device cuda:0,cuda:1,cuda:2,cuda:3
+# python scripts/rsl_rl/play.py --task Unitree-H1-2-Velocity-Train --num_envs 24 --checkpoint
 # CUDA_VISIBLE_DEVICES=0,1,2,3,4,5 

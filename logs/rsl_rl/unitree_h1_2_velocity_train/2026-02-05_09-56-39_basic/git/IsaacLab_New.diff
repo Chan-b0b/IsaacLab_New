@@ -1,0 +1,121 @@
+--- git status ---
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+  (commit or discard the untracked or modified content in submodules)
+	modified:   IsaacLab (modified content)
+	modified:   source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree.py
+	modified:   source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/mdp/rewards.py
+	modified:   source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_cfg.py
+	modified:   source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_train_cfg.py
+	typechange: unitree_model (new commits)
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	unitree_ros/
+
+no changes added to commit (use "git add" and/or "git commit -a") 
+
+
+--- git diff ---
+diff --git a/IsaacLab b/IsaacLab
+--- a/IsaacLab
++++ b/IsaacLab
+@@ -1 +1 @@
+-Subproject commit 37ddf626871758333d6ed89cf64ad702aef127d0
++Subproject commit 37ddf626871758333d6ed89cf64ad702aef127d0-dirty
+diff --git a/source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree.py b/source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree.py
+index c8a1deb..b846f0d 100644
+--- a/source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree.py
++++ b/source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree.py
+@@ -19,8 +19,8 @@ from unitree_rl_lab.assets.robots import unitree_actuators
+ 
+ # UNITREE_MODEL_DIR = "/home/unitree_rl_lab/unitree_model"  # Replace with the actual path to your unitree_model directory
+ # UNITREE_ROS_DIR = "/home/unitree_rl_lab/unitree_ros"  # Replace with the actual path to your unitree_ros package
+-UNITREE_MODEL_DIR = "/home/unitree_model"
+-UNITREE_ROS_DIR = "/home/unitree_ros" 
++UNITREE_MODEL_DIR = "/home/maverick/Humanoid/IsaacLab_New/unitree_model"
++UNITREE_ROS_DIR = "/home/maverick/Humanoid/IsaacLab_New/unitree_ros" 
+ 
+ @configclass
+ class UnitreeArticulationCfg(ArticulationCfg):
+diff --git a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/mdp/rewards.py b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/mdp/rewards.py
+index 7ae6c66..6102a43 100644
+--- a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/mdp/rewards.py
++++ b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/mdp/rewards.py
+@@ -249,6 +249,22 @@ Other rewards.
+ """
+ 
+ 
++def action_smoothness_l2(env: ManagerBasedRLEnv) -> torch.Tensor:
++    """Penalize lack of smoothness in actions using L2 squared kernel on second differences.
++    
++    Computes sum((action - 2*prev_action + prev_prev_action)^2) for each environment.
++    Requires env.action_manager to have .action, .prev_action, .prev_prev_action attributes.
++    
++    Returns:
++        Tensor of shape [num_envs] with smoothness penalty.
++    """
++    action = env.action_manager.action
++    prev_action = env.action_manager.prev_action
++    prev_prev_action = env.action_manager.prev_prev_action
++    second_diff = action - 2 * prev_action + prev_prev_action
++    return torch.sum(torch.square(second_diff), dim=1)
++
++
+ def maintain_default_pose_when_no_gait(
+     env: ManagerBasedRLEnv,
+     command_name: str,
+diff --git a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_cfg.py b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_cfg.py
+index f393f09..dcfe946 100644
+--- a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_cfg.py
++++ b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_cfg.py
+@@ -159,7 +159,7 @@ class EventCfg:
+     push_robot = EventTerm(
+         func=mdp.push_by_setting_velocity,
+         mode="interval",
+-        interval_range_s=(5.0, 5.0),
++        interval_range_s=(2.0, 10),
+         params={"velocity_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5)}},
+     )
+ 
+diff --git a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_train_cfg.py b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_train_cfg.py
+index e9dee31..a09f93d 100644
+--- a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_train_cfg.py
++++ b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_train_cfg.py
+@@ -104,7 +104,7 @@ class RewardsTrainCfg:
+     # -- feet
+     gait = RewTerm(
+         func=mdp.feet_gait,
+-        weight=3,
++        weight=1.5,
+         params={
+             "period": 0.8,
+             "offset": [0.0, 0.5],
+@@ -132,7 +132,7 @@ class RewardsTrainCfg:
+     )
+     feet_contact_forces = RewTerm(
+         func=mdp.contact_forces,
+-        weight=-0.001,
++        weight=-0.002,
+         params={
+             "threshold": 300,
+             "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*ankle.*"),
+diff --git a/unitree_model b/unitree_model
+deleted file mode 120000
+index 644c4c2..0000000
+--- a/unitree_model
++++ /dev/null
+@@ -1 +0,0 @@
+-/home/unitree_model
+\ No newline at end of file
+diff --git a/unitree_model b/unitree_model
+new file mode 160000
+index 0000000..9065ccf
+--- /dev/null
++++ b/unitree_model
+@@ -0,0 +1 @@
++Subproject commit 9065ccfa18a7f914057588962e13fc42910baec9
