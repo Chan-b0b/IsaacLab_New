@@ -13,7 +13,7 @@ neptune_project: isaaclab
 wandb_project: isaaclab
 resume: false
 load_run: .*
-load_checkpoint: model_.*.pt
+load_checkpoint: last.pt
 class_name: OnPolicyRunner
 policy:
   class_name: ActorCritic

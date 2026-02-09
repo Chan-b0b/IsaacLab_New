@@ -63,7 +63,7 @@ class BasePPORunnerWithSymmetryCfg(BasePPORunnerCfg):
         symmetry_cfg=RslRlSymmetryCfg(
             use_data_augmentation=True,
             use_mirror_loss=True,
-            mirror_loss_coeff=0.1,
+            mirror_loss_coeff=0.3,
             data_augmentation_func=mdp.compute_symmetric_states_h1_2,
         ),
     )

@@ -383,7 +383,7 @@ class RewardsCfg:
     )
     feet_clearance = RewTerm(
         func=mdp.foot_clearance_reward,
-        weight=20.0,
+        weight=10.0,
         params={
             "std": 0.05,
             "tanh_mult": 2.0,

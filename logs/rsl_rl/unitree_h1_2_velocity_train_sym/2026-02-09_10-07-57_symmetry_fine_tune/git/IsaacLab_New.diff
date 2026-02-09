@@ -1,0 +1,94 @@
+--- git status ---
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+  (commit or discard the untracked or modified content in submodules)
+	modified:   IsaacLab (modified content)
+	modified:   logs/rsl_rl/unitree_h1_2_velocity_train/2026-02-05_09-56-39_basic/params/agent.yaml
+	modified:   logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-05_14-03-13_symmetry/params/agent.yaml
+	modified:   source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/agents/rsl_rl_ppo_cfg.py
+	modified:   source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_cfg.py
+	modified:   source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_train_cfg.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_10-07-57_symmetry_fine_tune/
+
+no changes added to commit (use "git add" and/or "git commit -a") 
+
+
+--- git diff ---
+diff --git a/IsaacLab b/IsaacLab
+--- a/IsaacLab
++++ b/IsaacLab
+@@ -1 +1 @@
+-Subproject commit 37ddf626871758333d6ed89cf64ad702aef127d0
++Subproject commit 37ddf626871758333d6ed89cf64ad702aef127d0-dirty
+diff --git a/logs/rsl_rl/unitree_h1_2_velocity_train/2026-02-05_09-56-39_basic/params/agent.yaml b/logs/rsl_rl/unitree_h1_2_velocity_train/2026-02-05_09-56-39_basic/params/agent.yaml
+index aa4818e..02852ae 100644
+--- a/logs/rsl_rl/unitree_h1_2_velocity_train/2026-02-05_09-56-39_basic/params/agent.yaml
++++ b/logs/rsl_rl/unitree_h1_2_velocity_train/2026-02-05_09-56-39_basic/params/agent.yaml
+@@ -13,7 +13,7 @@ neptune_project: isaaclab
+ wandb_project: isaaclab
+ resume: false
+ load_run: .*
+-load_checkpoint: model_.*.pt
++load_checkpoint: last.pt
+ class_name: OnPolicyRunner
+ policy:
+   class_name: ActorCritic
+diff --git a/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-05_14-03-13_symmetry/params/agent.yaml b/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-05_14-03-13_symmetry/params/agent.yaml
+index 4bb4d92..0b33507 100644
+--- a/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-05_14-03-13_symmetry/params/agent.yaml
++++ b/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-05_14-03-13_symmetry/params/agent.yaml
+@@ -13,7 +13,7 @@ neptune_project: isaaclab
+ wandb_project: isaaclab
+ resume: false
+ load_run: .*
+-load_checkpoint: model_.*.pt
++load_checkpoint: last.pt
+ class_name: OnPolicyRunner
+ policy:
+   class_name: ActorCritic
+diff --git a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/agents/rsl_rl_ppo_cfg.py b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/agents/rsl_rl_ppo_cfg.py
+index 0c519b3..0bf2083 100644
+--- a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/agents/rsl_rl_ppo_cfg.py
++++ b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/agents/rsl_rl_ppo_cfg.py
+@@ -63,7 +63,7 @@ class BasePPORunnerWithSymmetryCfg(BasePPORunnerCfg):
+         symmetry_cfg=RslRlSymmetryCfg(
+             use_data_augmentation=True,
+             use_mirror_loss=True,
+-            mirror_loss_coeff=0.1,
++            mirror_loss_coeff=0.3,
+             data_augmentation_func=mdp.compute_symmetric_states_h1_2,
+         ),
+     )
+diff --git a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_cfg.py b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_cfg.py
+index d8948fb..242ecec 100644
+--- a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_cfg.py
++++ b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_cfg.py
+@@ -383,7 +383,7 @@ class RewardsCfg:
+     )
+     feet_clearance = RewTerm(
+         func=mdp.foot_clearance_reward,
+-        weight=20.0,
++        weight=10.0,
+         params={
+             "std": 0.05,
+             "tanh_mult": 2.0,
+diff --git a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_train_cfg.py b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_train_cfg.py
+index a09f93d..f8f1c17 100644
+--- a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_train_cfg.py
++++ b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_train_cfg.py
+@@ -122,7 +122,7 @@ class RewardsTrainCfg:
+     )
+     feet_clearance = RewTerm(
+         func=mdp.foot_clearance_reward,
+-        weight=3.0,
++        weight=1.5,
+         params={
+             "std": 0.08,
+             "tanh_mult": 1.5,
