@@ -1,0 +1,104 @@
+--- git status ---
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+  (commit or discard the untracked or modified content in submodules)
+	modified:   IsaacLab (new commits, modified content)
+	modified:   source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree.py
+	modified:   source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/agents/rsl_rl_ppo_cfg.py
+	modified:   source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_cfg.py
+	modified:   source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_train_cfg.py
+	modified:   unitree_ros (new commits)
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	logs/rsl_rl/unitree_g1_29dof_velocity/
+	logs/rsl_rl/unitree_h1_2_velocity_train/2026-02-05_03-38-17_history/
+	logs/rsl_rl/unitree_h1_2_velocity_train/2026-02-05_03-39-03_depth/
+	logs/rsl_rl/unitree_h1_2_velocity_train/2026-02-05_03-41-18_depth/
+	logs/rsl_rl/unitree_h1_2_velocity_train/2026-02-05_03-41-38_history/
+	logs/rsl_rl/unitree_h1_2_velocity_train/2026-02-05_15-15-48_history/
+	logs/rsl_rl/unitree_h1_2_velocity_train/2026-02-05_15-17-20_depth/
+	logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/
+
+no changes added to commit (use "git add" and/or "git commit -a") 
+
+
+--- git diff ---
+diff --git a/IsaacLab b/IsaacLab
+index 0f030aa..37ddf62 160000
+--- a/IsaacLab
++++ b/IsaacLab
+@@ -1 +1 @@
+-Subproject commit 0f030aa6bdd968ae387ac4b74289748437586618
++Subproject commit 37ddf626871758333d6ed89cf64ad702aef127d0-dirty
+diff --git a/source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree.py b/source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree.py
+index b846f0d..143303f 100644
+--- a/source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree.py
++++ b/source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree.py
+@@ -19,8 +19,8 @@ from unitree_rl_lab.assets.robots import unitree_actuators
+ 
+ # UNITREE_MODEL_DIR = "/home/unitree_rl_lab/unitree_model"  # Replace with the actual path to your unitree_model directory
+ # UNITREE_ROS_DIR = "/home/unitree_rl_lab/unitree_ros"  # Replace with the actual path to your unitree_ros package
+-UNITREE_MODEL_DIR = "/home/maverick/Humanoid/IsaacLab_New/unitree_model"
+-UNITREE_ROS_DIR = "/home/maverick/Humanoid/IsaacLab_New/unitree_ros" 
++UNITREE_MODEL_DIR = "/home/IsaacLab_New/unitree_model"
++UNITREE_ROS_DIR = "/home/IsaacLab_New/unitree_ros" 
+ 
+ @configclass
+ class UnitreeArticulationCfg(ArticulationCfg):
+diff --git a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/agents/rsl_rl_ppo_cfg.py b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/agents/rsl_rl_ppo_cfg.py
+index 0c519b3..0bf2083 100644
+--- a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/agents/rsl_rl_ppo_cfg.py
++++ b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/agents/rsl_rl_ppo_cfg.py
+@@ -63,7 +63,7 @@ class BasePPORunnerWithSymmetryCfg(BasePPORunnerCfg):
+         symmetry_cfg=RslRlSymmetryCfg(
+             use_data_augmentation=True,
+             use_mirror_loss=True,
+-            mirror_loss_coeff=0.1,
++            mirror_loss_coeff=0.3,
+             data_augmentation_func=mdp.compute_symmetric_states_h1_2,
+         ),
+     )
+diff --git a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_cfg.py b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_cfg.py
+index d8948fb..a3912af 100644
+--- a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_cfg.py
++++ b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_cfg.py
+@@ -297,10 +297,10 @@ class ObservationsCfg:
+         )
+         last_action = ObsTerm(func=mdp.last_action, params={"action_name": "JointPositionAction"})
+         gait_phase = ObsTerm(func=mdp.gait_phase, params={"period": 0.8})
+-        # height_scanner = ObsTerm(func=mdp.height_scan,
+-        #     params={"sensor_cfg": SceneEntityCfg("height_scanner")},
+-        #     clip=(-1.0, 5.0),
+-        # )
++        height_scanner = ObsTerm(func=mdp.height_scan,
++            params={"sensor_cfg": SceneEntityCfg("height_scanner")},
++            clip=(-1.0, 5.0),
++        )
+ 
+         # def __post_init__(self):
+         #     self.history_length = 5
+diff --git a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_train_cfg.py b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_train_cfg.py
+index a09f93d..f8f1c17 100644
+--- a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_train_cfg.py
++++ b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_train_cfg.py
+@@ -122,7 +122,7 @@ class RewardsTrainCfg:
+     )
+     feet_clearance = RewTerm(
+         func=mdp.foot_clearance_reward,
+-        weight=3.0,
++        weight=1.5,
+         params={
+             "std": 0.08,
+             "tanh_mult": 1.5,
+diff --git a/unitree_ros b/unitree_ros
+index 29cc27f..3ded9f6 160000
+--- a/unitree_ros
++++ b/unitree_ros
+@@ -1 +1 @@
+-Subproject commit 29cc27f7578e010165042e1fe45cc18f3a4dd2ca
++Subproject commit 3ded9f6dc727caec5f15fcd0432b18622356e1f6
