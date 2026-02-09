@@ -57,6 +57,7 @@ _build
 **/runs/*
 # **/logs/*
 **/recordings/*
+**/events.out.tfevents.*
 
 # Pre-Trained Checkpoints
 /.pretrained_checkpoints/
