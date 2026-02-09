@@ -77,4 +77,4 @@ datasets
 *.npz
 
 # Unitree robot definitions (modified locally)
-source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree.py
+**/robots/unitree.py
