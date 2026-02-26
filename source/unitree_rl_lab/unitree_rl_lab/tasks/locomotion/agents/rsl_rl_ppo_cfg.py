@@ -18,7 +18,7 @@ from unitree_rl_lab.tasks.locomotion import mdp
 class BasePPORunnerCfg(RslRlOnPolicyRunnerCfg):
     num_steps_per_env = 24
     max_iterations = 50000
-    save_interval = 1000
+    save_interval = 10000
     experiment_name = ""  # same as task name
     empirical_normalization = False
     policy = RslRlPpoActorCriticCfg(
