@@ -55,7 +55,7 @@ class RobotTrainSymPlayEnvCfg(RobotTrainSymEnvCfg):
         
         # Play-specific settings
         self.scene.num_envs = 32
-        self.scene.terrain.terrain_generator.num_rows = 2
+        self.scene.terrain.terrain_generator.num_rows = 10
         self.scene.terrain.terrain_generator.num_cols = 10
 
         self.commands.base_velocity.ranges.lin_vel_x = (-0.5, 0.5)

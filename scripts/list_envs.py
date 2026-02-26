@@ -64,6 +64,17 @@ def import_packages():
             pass
     sys.path.pop(0)
 
+    # Register Realman tasks
+    sys.path.insert(0, f"{pathlib.Path(__file__).parent.parent}/source")
+    try:
+        import realman  # noqa: F401
+    except Exception as e:
+        print(f"[WARNING] Failed to import realman: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        sys.path.pop(0)
+
 
 import_packages()
 
@@ -87,7 +98,7 @@ def main():
     index = 0
     # acquire all Isaac environments names
     for task_spec in gym.registry.values():
-        if "Unitree" in task_spec.id and "Isaac" not in task_spec.id:
+        if ("Unitree" in task_spec.id and "Isaac" not in task_spec.id) or task_spec.id.startswith("Realman-"):
             # add details to table
             table.add_row([index + 1, task_spec.id, task_spec.entry_point, task_spec.kwargs["env_cfg_entry_point"]])
             # increment count

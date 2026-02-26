@@ -30,7 +30,7 @@ sys.path.pop(0)
 
 tasks = []
 for task_spec in gym.registry.values():
-    if "Unitree" in task_spec.id and "Isaac" not in task_spec.id:
+    if ("Unitree" in task_spec.id and "Isaac" not in task_spec.id) or task_spec.id.startswith("Realman-"):
         tasks.append(task_spec.id)
 
 import argparse
@@ -104,6 +104,11 @@ import torch
 from datetime import datetime
 
 from rsl_rl.runners import OnPolicyRunner  # TODO: Consider printing the experiment name in the terminal.
+import sys
+import pathlib
+sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
+from log_camera_images import CameraImageLogger
+sys.path.pop(0)
 
 import isaaclab_tasks  # noqa: F401
 from isaaclab.envs import (
@@ -195,6 +200,19 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=log_dir, device=agent_cfg.device)
     # write git state to logs
     runner.add_git_repo_to_log(__file__)
+    
+    # Add camera image logger if cameras are enabled
+    if args_cli.enable_cameras and "wrist_cam" in env.unwrapped.scene.sensors:
+        camera_logger = CameraImageLogger(
+            env=env.unwrapped,
+            runner=runner,  # Pass runner instead of writer
+            log_interval=500,  # Log every 500 iterations
+            num_images=4  # Log 4 environment images in a grid
+        )
+        # Register callback to be called after each iteration
+        runner.camera_logger = camera_logger
+        print("[INFO] Camera image logging enabled - images will be saved to tensorboard every 500 iterations")
+    
     # load the checkpoint
     if agent_cfg.resume or agent_cfg.algorithm.class_name == "Distillation":
         print(f"[INFO]: Loading model checkpoint from: {resume_path}")
@@ -204,7 +222,9 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # dump the configuration into log-directory
     dump_yaml(os.path.join(log_dir, "params", "env.yaml"), env_cfg)
     dump_yaml(os.path.join(log_dir, "params", "agent.yaml"), agent_cfg)
-    export_deploy_cfg(env.unwrapped, log_dir)
+    # Export deploy config only for Unitree robots
+    if hasattr(env.unwrapped.cfg.scene.robot, 'joint_sdk_names'):
+        export_deploy_cfg(env.unwrapped, log_dir)
     # copy the environment configuration file to the log directory
     shutil.copy(
         inspect.getfile(env_cfg.__class__),
@@ -212,6 +232,17 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     )
 
     # run training
+    if hasattr(runner, 'camera_logger'):
+        # Monkey-patch the log method to call camera logger
+        original_log = runner.log
+        def log_with_camera(locs, width=80, pad=35):
+            # Call original log first
+            original_log(locs, width, pad)
+            # Then log camera images (get iteration from locs dict)
+            if 'it' in locs:
+                runner.camera_logger(locs['it'])
+        runner.log = log_with_camera
+    
     runner.learn(num_learning_iterations=agent_cfg.max_iterations, init_at_random_ep_len=True)
 
     # close the simulator

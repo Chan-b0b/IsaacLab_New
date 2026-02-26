@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "realman"
+version = "0.1.0"
+description = "Realman RM75 robotic arm environments for Isaac Lab"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+dependencies = [
+    "isaaclab",
+]
+
+[tool.setuptools]
+packages = {find = {}}

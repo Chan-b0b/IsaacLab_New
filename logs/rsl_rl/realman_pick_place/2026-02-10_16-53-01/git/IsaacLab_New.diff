@@ -1,0 +1,232 @@
+--- git status ---
+On branch Realman
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+  (commit or discard the untracked or modified content in submodules)
+	modified:   IsaacLab (modified content)
+	modified:   deploy/robots/h1_2/config/config.yaml
+	modified:   logs/rsl_rl/unitree_h1_2_velocity_train/2026-02-09_06-12-08_symmetry_wo_depth/model_0.pt
+	modified:   logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/exported/policy.onnx
+	modified:   logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/exported/policy.pt
+	modified:   logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/model_5000.pt
+	modified:   logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/model_6000.pt
+	modified:   logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/model_7000.pt
+	modified:   logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/model_8000.pt
+	modified:   scripts/list_envs.py
+	modified:   scripts/rsl_rl/train.py
+	modified:   source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_cfg.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	camera_test.png
+	camera_test_front_mid.png
+	camera_test_z_axis_5cm.png
+	logs/rsl_rl/realman_pick_place/
+	scripts/add_camera_to_usd.py
+	scripts/log_camera_images.py
+	scripts/test_camera.py
+	source/realman/
+
+no changes added to commit (use "git add" and/or "git commit -a") 
+
+
+--- git diff ---
+diff --git a/IsaacLab b/IsaacLab
+--- a/IsaacLab
++++ b/IsaacLab
+@@ -1 +1 @@
+-Subproject commit 37ddf626871758333d6ed89cf64ad702aef127d0
++Subproject commit 37ddf626871758333d6ed89cf64ad702aef127d0-dirty
+diff --git a/deploy/robots/h1_2/config/config.yaml b/deploy/robots/h1_2/config/config.yaml
+index 102da41..58e3b74 100644
+--- a/deploy/robots/h1_2/config/config.yaml
++++ b/deploy/robots/h1_2/config/config.yaml
+@@ -56,5 +56,5 @@ FSM:
+   Velocity:
+     transitions: 
+       Passive: a.on_pressed
+-    policy_dir: /home/lgcns/Humanoid/IsaacLab_New/logs/rsl_rl/unitree_h1_2_velocity_train/2026-02-05_09-56-39_basic
++    policy_dir: /home/maverick/Humanoid/IsaacLab_New/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry
+     
+\ No newline at end of file
+diff --git a/logs/rsl_rl/unitree_h1_2_velocity_train/2026-02-09_06-12-08_symmetry_wo_depth/model_0.pt b/logs/rsl_rl/unitree_h1_2_velocity_train/2026-02-09_06-12-08_symmetry_wo_depth/model_0.pt
+index b0fe98c..45bc384 100644
+Binary files a/logs/rsl_rl/unitree_h1_2_velocity_train/2026-02-09_06-12-08_symmetry_wo_depth/model_0.pt and b/logs/rsl_rl/unitree_h1_2_velocity_train/2026-02-09_06-12-08_symmetry_wo_depth/model_0.pt differ
+diff --git a/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/exported/policy.onnx b/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/exported/policy.onnx
+index 66dd58b..cec1f0d 100644
+Binary files a/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/exported/policy.onnx and b/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/exported/policy.onnx differ
+diff --git a/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/exported/policy.pt b/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/exported/policy.pt
+index afd0701..d1ef7c7 100644
+--- a/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/exported/policy.pt
++++ b/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/exported/policy.pt
+@@ -1,3 +1,3 @@
+ version https://git-lfs.github.com/spec/v1
+-oid sha256:7d479feb25e5b8a789ad5bdcc9c8150a947bfc3cb96c86f197821fbd8d25eb82
++oid sha256:cdfc119ce2b7b6a08fd11084b6320a240559a53e58f36392a642f020faf04db8
+ size 841106
+diff --git a/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/model_5000.pt b/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/model_5000.pt
+index c76a17e..926f1a0 100644
+Binary files a/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/model_5000.pt and b/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/model_5000.pt differ
+diff --git a/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/model_6000.pt b/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/model_6000.pt
+index 08a2dde..983ebd7 100644
+Binary files a/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/model_6000.pt and b/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/model_6000.pt differ
+diff --git a/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/model_7000.pt b/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/model_7000.pt
+index 305f076..ca90a8b 100644
+Binary files a/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/model_7000.pt and b/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/model_7000.pt differ
+diff --git a/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/model_8000.pt b/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/model_8000.pt
+index 174face..89b3e29 100644
+Binary files a/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/model_8000.pt and b/logs/rsl_rl/unitree_h1_2_velocity_train_sym/2026-02-09_01-29-44_symmetry/model_8000.pt differ
+diff --git a/scripts/list_envs.py b/scripts/list_envs.py
+index 5324af9..1b8f64e 100644
+--- a/scripts/list_envs.py
++++ b/scripts/list_envs.py
+@@ -64,6 +64,15 @@ def import_packages():
+             pass
+     sys.path.pop(0)
+ 
++    # Register Realman tasks
++    sys.path.insert(0, f"{pathlib.Path(__file__).parent.parent}/source")
++    try:
++        import realman  # noqa: F401
++    except Exception:
++        pass
++    finally:
++        sys.path.pop(0)
++
+ 
+ import_packages()
+ 
+@@ -87,7 +96,7 @@ def main():
+     index = 0
+     # acquire all Isaac environments names
+     for task_spec in gym.registry.values():
+-        if "Unitree" in task_spec.id and "Isaac" not in task_spec.id:
++        if ("Unitree" in task_spec.id and "Isaac" not in task_spec.id) or task_spec.id.startswith("Realman-"):
+             # add details to table
+             table.add_row([index + 1, task_spec.id, task_spec.entry_point, task_spec.kwargs["env_cfg_entry_point"]])
+             # increment count
+diff --git a/scripts/rsl_rl/train.py b/scripts/rsl_rl/train.py
+index e621154..c60ff2d 100644
+--- a/scripts/rsl_rl/train.py
++++ b/scripts/rsl_rl/train.py
+@@ -11,13 +11,13 @@ import os
+ # Fix CUDA device enumeration issue - limit to available GPUs
+ os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0,1,2,3,4,5")
+ 
+-# import debugpy
++import debugpy
+ 
+-# # Initialize debugpy for remote debugging
+-# debugpy.listen(("0.0.0.0", 5678))
+-# print("Waiting for debugger to attach on port 5678...")
+-# debugpy.wait_for_client()
+-# print("Debugger attached!")
++# Initialize debugpy for remote debugging
++debugpy.listen(("0.0.0.0", 5678))
++print("Waiting for debugger to attach on port 5678...")
++debugpy.wait_for_client()
++print("Debugger attached!")
+ 
+ import gymnasium as gym
+ import pathlib
+@@ -30,7 +30,7 @@ sys.path.pop(0)
+ 
+ tasks = []
+ for task_spec in gym.registry.values():
+-    if "Unitree" in task_spec.id and "Isaac" not in task_spec.id:
++    if ("Unitree" in task_spec.id and "Isaac" not in task_spec.id) or task_spec.id.startswith("Realman-"):
+         tasks.append(task_spec.id)
+ 
+ import argparse
+@@ -104,6 +104,11 @@ import torch
+ from datetime import datetime
+ 
+ from rsl_rl.runners import OnPolicyRunner  # TODO: Consider printing the experiment name in the terminal.
++import sys
++import pathlib
++sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
++from log_camera_images import CameraImageLogger
++sys.path.pop(0)
+ 
+ import isaaclab_tasks  # noqa: F401
+ from isaaclab.envs import (
+@@ -195,6 +200,19 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
+     runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=log_dir, device=agent_cfg.device)
+     # write git state to logs
+     runner.add_git_repo_to_log(__file__)
++    
++    # Add camera image logger if cameras are enabled
++    if args_cli.enable_cameras and "wrist_cam" in env.unwrapped.scene.sensors:
++        camera_logger = CameraImageLogger(
++            env=env.unwrapped,
++            runner=runner,  # Pass runner instead of writer
++            log_interval=500,  # Log every 500 iterations
++            num_images=4  # Log 4 environment images in a grid
++        )
++        # Register callback to be called after each iteration
++        runner.camera_logger = camera_logger
++        print("[INFO] Camera image logging enabled - images will be saved to tensorboard every 500 iterations")
++    
+     # load the checkpoint
+     if agent_cfg.resume or agent_cfg.algorithm.class_name == "Distillation":
+         print(f"[INFO]: Loading model checkpoint from: {resume_path}")
+@@ -204,7 +222,9 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
+     # dump the configuration into log-directory
+     dump_yaml(os.path.join(log_dir, "params", "env.yaml"), env_cfg)
+     dump_yaml(os.path.join(log_dir, "params", "agent.yaml"), agent_cfg)
+-    export_deploy_cfg(env.unwrapped, log_dir)
++    # Export deploy config only for Unitree robots
++    if hasattr(env.unwrapped.cfg.scene.robot, 'joint_sdk_names'):
++        export_deploy_cfg(env.unwrapped, log_dir)
+     # copy the environment configuration file to the log directory
+     shutil.copy(
+         inspect.getfile(env_cfg.__class__),
+@@ -212,6 +232,17 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
+     )
+ 
+     # run training
++    if hasattr(runner, 'camera_logger'):
++        # Monkey-patch the log method to call camera logger
++        original_log = runner.log
++        def log_with_camera(locs, width=80, pad=35):
++            # Call original log first
++            original_log(locs, width, pad)
++            # Then log camera images (get iteration from locs dict)
++            if 'it' in locs:
++                runner.camera_logger(locs['it'])
++        runner.log = log_with_camera
++    
+     runner.learn(num_learning_iterations=agent_cfg.max_iterations, init_at_random_ep_len=True)
+ 
+     # close the simulator
+diff --git a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_cfg.py b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_cfg.py
+index f5f47fa..ef8096a 100644
+--- a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_cfg.py
++++ b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/h1_2/velocity_env_cfg.py
+@@ -297,16 +297,16 @@ class ObservationsCfg:
+         )
+         last_action = ObsTerm(func=mdp.last_action, params={"action_name": "JointPositionAction"})
+         gait_phase = ObsTerm(func=mdp.gait_phase, params={"period": 0.8})
+-        # height_scanner = ObsTerm(func=mdp.height_scan,
+-        #     params={"sensor_cfg": SceneEntityCfg("height_scanner")},
+-        #     clip=(-1.0, 5.0),
+-        # )
+-        
+-        applied_external_forces = ObsTerm(
+-            func=mdp.applied_external_wrench,
+-            params={"asset_cfg": SceneEntityCfg("robot", body_names="torso_link")},
+-            scale=0.01
++        height_scanner = ObsTerm(func=mdp.height_scan,
++            params={"sensor_cfg": SceneEntityCfg("height_scanner")},
++            clip=(-1.0, 5.0),
+         )
++        
++        # applied_external_forces = ObsTerm(
++        #     func=mdp.applied_external_wrench,
++        #     params={"asset_cfg": SceneEntityCfg("robot", body_names="torso_link")},
++        #     scale=0.01
++        # )
+ 
+         # def __post_init__(self):
+         #     self.history_length = 5

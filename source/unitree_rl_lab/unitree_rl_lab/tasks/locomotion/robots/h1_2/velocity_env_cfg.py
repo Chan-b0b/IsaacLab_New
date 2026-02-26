@@ -52,8 +52,8 @@ class RobotSceneCfg(InteractiveSceneCfg):
         physics_material=sim_utils.RigidBodyMaterialCfg(
             friction_combine_mode="multiply",
             restitution_combine_mode="multiply",
-            static_friction=1.0,
-            dynamic_friction=1.0,
+            static_friction=1,
+            dynamic_friction=1,
         ),
         visual_material=sim_utils.MdlFileCfg(
             mdl_path=f"{ISAACLAB_NUCLEUS_DIR}/Materials/TilesMarbleSpiderWhiteBrickBondHoned/TilesMarbleSpiderWhiteBrickBondHoned.mdl",
@@ -297,16 +297,16 @@ class ObservationsCfg:
         )
         last_action = ObsTerm(func=mdp.last_action, params={"action_name": "JointPositionAction"})
         gait_phase = ObsTerm(func=mdp.gait_phase, params={"period": 0.8})
-        # height_scanner = ObsTerm(func=mdp.height_scan,
-        #     params={"sensor_cfg": SceneEntityCfg("height_scanner")},
-        #     clip=(-1.0, 5.0),
-        # )
-        
-        applied_external_forces = ObsTerm(
-            func=mdp.applied_external_wrench,
-            params={"asset_cfg": SceneEntityCfg("robot", body_names="torso_link")},
-            scale=0.01
+        height_scanner = ObsTerm(func=mdp.height_scan,
+            params={"sensor_cfg": SceneEntityCfg("height_scanner")},
+            clip=(-1.0, 5.0),
         )
+        
+        # applied_external_forces = ObsTerm(
+        #     func=mdp.applied_external_wrench,
+        #     params={"asset_cfg": SceneEntityCfg("robot", body_names="torso_link")},
+        #     scale=0.01
+        # )
 
         # def __post_init__(self):
         #     self.history_length = 5
@@ -450,7 +450,7 @@ class RobotEnvCfg(ManagerBasedRLEnvCfg):
     """Configuration for the locomotion velocity-tracking environment."""
 
     # Scene settings
-    scene: RobotSceneCfg = RobotSceneCfg(num_envs=512, env_spacing=2.5)
+    scene: RobotSceneCfg = RobotSceneCfg(num_envs=512, env_spacing=0.5)
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
@@ -459,7 +459,7 @@ class RobotEnvCfg(ManagerBasedRLEnvCfg):
     rewards: RewardsCfg = RewardsCfg()
     terminations: TerminationsCfg = TerminationsCfg()
     events: EventCfg = EventCfg()
-    curriculum: CurriculumCfg = CurriculumCfg()
+    # curriculum: CurriculumCfg = CurriculumCfg()
 
     def __post_init__(self):
         """Post initialization."""
@@ -484,10 +484,12 @@ class RobotEnvCfg(ManagerBasedRLEnvCfg):
         # this generates terrains with increasing difficulty and is useful for training
         if getattr(self.curriculum, "terrain_levels", None) is not None:
             if self.scene.terrain.terrain_generator is not None:
-                self.scene.terrain.terrain_generator.curriculum = True
+                self.scene.terrain.terrain_generator.curriculum = False
         else:
             if self.scene.terrain.terrain_generator is not None:
                 self.scene.terrain.terrain_generator.curriculum = False
+
+        self.scene.env_spacing = 0.5
 
 
 @configclass
@@ -495,6 +497,8 @@ class RobotPlayEnvCfg(RobotEnvCfg):
     def __post_init__(self):
         super().__post_init__()
         self.scene.num_envs = 32
+        self.scene.env_spacing = 0.5
+
         self.scene.terrain.terrain_generator.num_rows = 2
         self.scene.terrain.terrain_generator.num_cols = 10
         self.commands.base_velocity.ranges = self.commands.base_velocity.limit_ranges

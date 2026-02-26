@@ -58,8 +58,6 @@ import os
 import time
 import torch
 
-from rsl_rl.runners import OnPolicyRunner
-
 import isaaclab_tasks  # noqa: F401
 from isaaclab.envs import DirectMARLEnv, multi_agent_to_single_agent
 from isaaclab.utils.assets import retrieve_file_path
@@ -71,6 +69,16 @@ from isaaclab_tasks.utils import get_checkpoint_path
 import unitree_rl_lab.tasks  # noqa: F401
 from unitree_rl_lab.utils.parser_cfg import parse_env_cfg
 
+import pathlib
+import sys
+
+# Do not prepend the workspace `source/` to sys.path here; ensure scripts
+# directory is importable but avoid shadowing installed packages.
+sys.path.insert(0, f"{pathlib.Path(__file__).parent.parent}")
+from list_envs import import_packages  # noqa: F401
+import os as _os
+
+from rsl_rl.runners import OnPolicyRunner
 
 def main():
     """Play with RSL-RL agent."""
@@ -169,6 +177,11 @@ def main():
     # simulate environment
     while simulation_app.is_running():
         start_time = time.time()
+        
+        gravity_forces = env.unwrapped.scene["robot"].root_physx_view.get_gravity_compensation_forces()
+        joint_ids = env.unwrapped.scene["robot"].find_joints("joint_[1-7]")[0]
+        env.unwrapped.scene["robot"].set_joint_effort_target(gravity_forces[:, joint_ids], joint_ids=joint_ids)
+
         # run everything in inference mode
         with torch.inference_mode():
             # agent stepping
