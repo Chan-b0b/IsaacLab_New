@@ -55,8 +55,7 @@ def main():
     parser.add_argument("--disable_fabric", type=bool, default=None, help="Disable fabric simulation.")
     cli_args.add_rsl_rl_args(parser)
     AppLauncher.add_app_launcher_args(parser)
-    args_cli, hydra_args = parser.parse_known_args()
-    sys.argv = [sys.argv[0]] + hydra_args
+    args_cli = parser.parse_args()
     args_cli.enable_cameras = True
 
     # Create the SimulationApp
@@ -74,7 +73,7 @@ def main():
     from isaaclab_tasks.utils.parse_cfg import parse_env_cfg, load_cfg_from_registry
     from isaaclab_tasks.utils import get_checkpoint_path
     from rsl_rl.runners import OnPolicyRunner
-    from scripts.rsl_rl.expert_runner import ExpertOnPolicyRunner
+    from scripts.rsl_rl.imitation_runner import ExpertImitationRunner
     from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapper
 
     env_cfg = parse_env_cfg(
@@ -126,7 +125,6 @@ def main():
             agent_cfg = getattr(mod, attr_name)()
         else:
             raise RuntimeError(f"Unable to resolve agent config for task {args_cli.task!r}")
-    
     agent_cfg = cli_args.update_rsl_rl_cfg(agent_cfg, args_cli)
     agent_cfg.seed = args_cli.seed if args_cli.seed is not None else agent_cfg.seed
     agent_cfg.max_iterations = args_cli.max_iterations if args_cli.max_iterations is not None else agent_cfg.max_iterations
@@ -148,7 +146,7 @@ def main():
         resume_path = get_checkpoint_path(log_root_path, agent_cfg.load_run, agent_cfg.load_checkpoint)
 
 
-    runner = ExpertOnPolicyRunner(env, agent_cfg.to_dict(), log_dir=log_dir, device=args_cli.device)
+    runner = ExpertImitationRunner(env, agent_cfg.to_dict(), log_dir=log_dir, device=args_cli.device)
     
     if agent_cfg.resume or agent_cfg.algorithm.class_name == "Distillation":
         print(f"[INFO]: Loading model checkpoint from: {resume_path}")
@@ -186,7 +184,7 @@ def main():
     def expert_provider(obs, step_idx, tot_timesteps):
         num_expert_envs = get_expert_env_count()
         if num_expert_envs <= 0:
-            return None, None
+            return None, None, None, None
         with torch.inference_mode():
             robot = env.unwrapped.scene["robot"]
             ee_frame_tf: FrameTransformer = env.unwrapped.scene["ee_frame"]
@@ -219,10 +217,14 @@ def main():
             expert_pct = getattr(env.unwrapped, "_expert_percentage", 1.0)
             if expert_pct >= 1.0:
                 idx = torch.arange(env.unwrapped.num_envs, device=expert_actions.device, dtype=torch.long)
-                return idx, expert_actions[idx]
+                expert_idx = idx
+                expert_joint_actions = expert_actions[idx]
+                expert_target_pos = target_position[idx]
+                expert_target_ori = target_orientation[idx]
+                return expert_idx, expert_joint_actions, expert_target_pos, expert_target_ori
 
             if expert_pct <= 0.0:
-                return None, None
+                return None, None, None, None
 
             # Bernoulli selection per environment (on the action tensor device)
             # n_envs = env.unwrapped.num_envs
@@ -234,7 +236,7 @@ def main():
             #     idx = torch.randint(0, n_envs, (1,), device=expert_actions.device, dtype=torch.long)
             # return idx, expert_actions[idx]
 
-            return torch.arange(num_expert_envs), expert_actions[:num_expert_envs]
+            return torch.arange(num_expert_envs), expert_actions[:num_expert_envs], target_position[:num_expert_envs], target_orientation[:num_expert_envs]
     
     # Log expert percentage
     def log_expert_percentage():

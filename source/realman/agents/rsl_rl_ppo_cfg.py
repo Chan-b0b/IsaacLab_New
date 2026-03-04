@@ -29,7 +29,7 @@ class RealmanPickPlacePPORunnerCfg(RslRlOnPolicyRunnerCfg):
         entropy_coef=0.01,
         num_learning_epochs=5,
         num_mini_batches=4,
-        learning_rate=1.0e-4,
+        learning_rate=1.0e-5,
         schedule="adaptive",
         gamma=0.985,
         lam=0.95,

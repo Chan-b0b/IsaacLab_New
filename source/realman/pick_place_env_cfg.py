@@ -119,6 +119,7 @@ class RealmanPickPlaceEnvCfg(LiftEnvCfg):
 
     def __post_init__(self):
         super().__post_init__()
+        self.episode_length_s = 2
 
         # Use Realman RM75-6FB-V robot (includes camera links)
         self.scene.robot = RM75_6FB_V_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
@@ -139,20 +140,20 @@ class RealmanPickPlaceEnvCfg(LiftEnvCfg):
             joint_names=["finger_joint", "left_inner_knuckle_joint", "right_inner_knuckle_joint", 
                          "right_outer_knuckle_joint", "left_inner_finger_joint", "right_inner_finger_joint"],
             open_command_expr={
-                "finger_joint": 0.78,                    # Master joint
-                "left_inner_knuckle_joint": 0.78,        # mimic ×1
-                "right_inner_knuckle_joint": -0.78,      # mimic ×-1
-                "right_outer_knuckle_joint": -0.78,      # mimic ×-1
-                "left_inner_finger_joint": -0.78,        # mimic ×-1
-                "right_inner_finger_joint": 0.78,        # mimic ×1
-            },
-            close_command_expr={
                 "finger_joint": 0.0,
                 "left_inner_knuckle_joint": 0.0,
                 "right_inner_knuckle_joint": 0.0,
                 "right_outer_knuckle_joint": 0.0,
                 "left_inner_finger_joint": 0.0,
                 "right_inner_finger_joint": 0.0,
+            },
+            close_command_expr={
+                "finger_joint": 0.5,                    # Master joint
+                "left_inner_knuckle_joint": 0.5,        # mimic ×1
+                "right_inner_knuckle_joint": -0.5,      # mimic ×-1
+                "right_outer_knuckle_joint": -0.5,      # mimic ×-1
+                "left_inner_finger_joint": -0.2,        # mimic ×-1
+                "right_inner_finger_joint": 0.2,        # mimic ×1
             },
         )
 
@@ -226,21 +227,21 @@ class RealmanPickPlaceEnvCfg(LiftEnvCfg):
         self.rewards.grasp_reward = RewTerm(
             func=realman_rewards.grasping_reward,
             params={
-                "grasp_distance_threshold": 0.08,
-                "gripper_closed_threshold": 0.5,
+                "grasp_distance_threshold": 0.06,
+                "gripper_closed_threshold": 0,
                 "action_term_name": "gripper_action",
                 "gripper_cfg": SceneEntityCfg("robot", body_names=["left_inner_finger", "right_inner_finger"]),
             },
-            weight=10.0,
+            weight=5.0,
         )
         
         self.rewards.gripper_height_penalty = RewTerm(
             func=realman_rewards.gripper_height_penalty,
             weight=-10.0,  # Negative weight for penalty
-            params={"minimum_height": 0.07, 
+            params={"minimum_height": 0.03, 
                     "asset_cfg": SceneEntityCfg(
-                        "robot", body_names=["left_outer_knuckle",
-                                             "right_outer_knuckle"])}  # Use left_outer_knuckle_link as gripper reference
+                        "robot", body_names=["left_inner_finger",
+                                             "right_inner_finger"])}
         )
         
         self.rewards.object_goal_tracking = RewTerm(
@@ -267,7 +268,7 @@ class RealmanPickPlaceEnvCfg(LiftEnvCfg):
         # Add termination for object falling out of bounds
         self.terminations.object_out_of_bounds = DoneTerm(
             func=realman_termination.object_out_of_bounds,
-            params={"maximum_distance": 0.18, "asset_cfg": SceneEntityCfg("object")},  # Terminate if object moves > 0.18m from spawn
+            params={"maximum_distance": 0.15, "asset_cfg": SceneEntityCfg("object")},  # Terminate if object moves > 0.18m from spawn
         )
 
 
@@ -281,9 +282,9 @@ class RealmanPickPlaceEnvCfg(LiftEnvCfg):
             func=modify_object_spawn_range,
             params={
                 "event_term_name": "reset_object_position",
-                "start_range": {"x": (-0.0,0.0), "y": (-0.0, 0.0)},
+                "start_range": {"x": (-0.1,0.1), "y": (-0.15, 0.15)},
                 "end_range": {"x": (-0.08,0.08), "y": (-0.15, 0.15)},
-                "num_steps": 200000
+                "num_steps": 2000000
             }
         )
         
@@ -291,10 +292,31 @@ class RealmanPickPlaceEnvCfg(LiftEnvCfg):
         self.curriculum.expert_percentage = CurrTerm(
             func=modify_expert_percentage,
             params={
-                "start_percentage": 0.995,  # Start with 100% expert
+                "start_percentage": 0.99,  # Start with 99% expert
                 "end_percentage": 0.0,     # Fade to 0% expert
-                "num_steps": 1000000         # Complete fade-out by 1M steps
+                "num_steps": 2000000         # Complete fade-out by 1M steps
             }
+        )
+        self.curriculumaction_rate = CurrTerm(
+            func=mdp.modify_reward_weight,
+            params={"term_name": "action_rate", "weight": 2, "num_steps": 50000},
+        )
+
+        self.curriculumjoint_vel = CurrTerm(
+            func=mdp.modify_reward_weight,
+            params={"term_name": "joint_vel", "weight": 2, "num_steps": 50000},
+        )
+
+        self.events.finger_material = EventTerm(
+            func=mdp.randomize_rigid_body_material,
+            mode="startup",
+            params={
+                "asset_cfg": SceneEntityCfg("robot", body_names=["left_inner_finger", "right_inner_finger"]),
+                "static_friction_range": (10.0, 10.0),
+                "dynamic_friction_range": (10.0, 10.0),
+                "restitution_range": (0.0, 0.0),
+                "num_buckets": 1,
+            },
         )
         
         # Apply gravity compensation each step via an event term scheduled at the

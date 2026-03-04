@@ -10,22 +10,18 @@ from tensordict import TensorDict
 from rsl_rl.runners import OnPolicyRunner
 
 
-ExpertProvider = Callable[[TensorDict, int, int], Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]]
-# Signature: (obs, step_global_counter, tot_timesteps) -> (indices, expert_joint_actions, expert_target_pos, expert_target_ori)
+ExpertProvider = Callable[[TensorDict, int, int], Tuple[torch.Tensor, torch.Tensor]]
+# Signature: (obs, step_global_counter, tot_timesteps) -> (indices, actions)
 
 
-class ExpertOnPolicyRunner(OnPolicyRunner):
-    """OnPolicyRunner subclass that can inject expert actions and collect target poses.
+class ExpertImitationRunner(OnPolicyRunner):
+    """OnPolicyRunner subclass that can inject expert actions during rollout.
 
     Provide an `expert_provider` callable to `learn()` which returns a tuple
-    `(indices, expert_joint_actions, expert_target_pos, expert_target_ori)` to:
-      - overwrite the agent actions for those env indices for the current step,
-      - collect target_pos/target_ori for behavior cloning,
-      - optionally supervise model outputs on task-space target poses.
-
-    `indices` can be a 1D LongTensor of environment indices or a boolean mask of shape `(num_envs,)`.
-    `expert_joint_actions` must match the action shape for the selected indices.
-    `expert_target_pos` and `expert_target_ori` have shape (num_expert_envs, 3) and (num_expert_envs, 4).
+    `(indices, actions)` to overwrite the agent actions for those env indices
+    for the current step. `indices` can be a 1D LongTensor of environment indices
+    or a boolean mask of shape `(num_envs,)`. `actions` must match the action
+    shape for the selected indices.
     """
 
     def learn(
@@ -53,6 +49,13 @@ class ExpertOnPolicyRunner(OnPolicyRunner):
         lenbuffer = deque(maxlen=100)
         cur_reward_sum = torch.zeros(self.env.num_envs, dtype=torch.float, device=self.device)
         cur_episode_length = torch.zeros(self.env.num_envs, dtype=torch.float, device=self.device)
+        # Online imitation (behavior cloning) bookkeeping
+        imitation_total_loss = 0.0
+        imitation_count = 0
+        imitation_lr = getattr(self, "imitation_lr", getattr(self.alg, "learning_rate", 1e-3))
+        actor_params = list(self.alg.policy.actor.parameters()) + list(self.alg.policy.policy_encoder.parameters())
+        imitation_optimizer = torch.optim.Adam(actor_params, lr=imitation_lr)
+        mse = torch.nn.MSELoss()
         # Track rewards and episode lengths for steps where expert was NOT used
         nonexpert_rewbuffer = deque(maxlen=100)
         nonexpert_lenbuffer = deque(maxlen=100)
@@ -75,42 +78,50 @@ class ExpertOnPolicyRunner(OnPolicyRunner):
             # Rollout timing
             start = time.time()
             # Rollout
-            with torch.inference_mode():
-                for step_idx in range(self.num_steps_per_env):
-                    # Sample actions
-                    actions = self.alg.act(obs)
+            for step_idx in range(self.num_steps_per_env):
+                # Sample actions (no grad for action selection)
+                pred_actions = self.alg.policy.actor_output(obs)
+                actions = pred_actions.clone().to(self.env.device).detach()
 
-                    # Expert injection: ask provider for indices, actions, and target poses
-                    # default: no env uses expert this step
-                    expert_mask = torch.zeros(self.env.num_envs, dtype=torch.bool, device=actions.device)
-                    if expert_provider is not None:
-                        try:
-                            expert_idx, expert_actions, expert_target_pos, expert_target_ori = expert_provider(
-                                obs, step_idx, self.tot_timesteps
-                            )
-                            if expert_idx is not None:
-                                # normalize index format to boolean mask on actions.device
-                                if isinstance(expert_idx, torch.BoolTensor) or (
-                                    isinstance(expert_idx, torch.Tensor) and expert_idx.dtype == torch.bool
-                                ):
-                                    mask = expert_idx.to(device=actions.device)
-                                    expert_mask = mask
-                                    if mask.any():
-                                        actions[mask] = expert_actions.to(actions.device)
-                                else:
-                                    idx = expert_idx.long().to(device=actions.device)
-                                    if idx.numel() > 0:
-                                        expert_mask[idx] = True
-                                        actions[idx] = expert_actions.to(actions.device)
-                        except Exception:
-                            # swallow provider errors to avoid breaking rollout
-                            expert_mask = torch.zeros(self.env.num_envs, dtype=torch.bool, device=actions.device)
+                # Expert injection: ask provider for indices and expert actions
+                # default: no env uses expert this step
+                expert_mask = torch.zeros(self.env.num_envs, dtype=torch.bool, device=actions.device)
+                if expert_provider is not None:
+                    expert_idx, expert_actions = expert_provider(obs, step_idx, self.tot_timesteps)
+                    if expert_idx is not None:
+                        # normalize index format to boolean mask on actions.device
+                        if isinstance(expert_idx, torch.BoolTensor) or (
+                            isinstance(expert_idx, torch.Tensor) and expert_idx.dtype == torch.bool
+                        ):
+                            mask = expert_idx.to(device=actions.device)
+                            expert_mask = mask
+                            if mask.any():
+                                actions[mask] = expert_actions.to(actions.device)
+                        else:
+                            idx = expert_idx.long().to(device=actions.device)
+
+                        actions[idx] = expert_actions.to(actions.device)
+                        # Record actor observations (concatenated actor inputs) and expert actions for BC
+                        # index obs (TensorDict) to selected envs
+                        sel_obs = obs[idx]
+                        expert_dev = expert_actions.to(self.device)
+                        # Compute actor output and perform an immediate BC update
+
+
+                        loss = mse(pred_actions[torch.arange(len(expert_idx))], expert_dev.to(pred_actions.device).clone())
+                        imitation_optimizer.zero_grad()
+                        loss.backward()
+                        torch.nn.utils.clip_grad_norm_(actor_params, getattr(self, "max_grad_norm", 1.0))
+                        imitation_optimizer.step()
+                        imitation_total_loss += loss.item() * actions.shape[0]
+                        imitation_count += actions.shape[0]
+
 
                     # Step the environment
                     obs, rewards, dones, extras = self.env.step(actions.to(self.env.device))
                     obs, rewards, dones = (obs.to(self.device), rewards.to(self.device), dones.to(self.device))
                     # Process the step
-                    self.alg.process_env_step(obs, rewards, dones, extras)
+                    # self.alg.process_env_step(obs, rewards, dones, extras)
 
                     # Reset expert state machine for finished envs if callback provided
                     if expert_reset is not None:
@@ -123,54 +134,54 @@ class ExpertOnPolicyRunner(OnPolicyRunner):
 
                     intrinsic_rewards = getattr(self.alg, "intrinsic_rewards", None)
 
-                    # Logging bookkeeping (minimal, follow base behavior)
-                    if self.log_dir is not None:
-                        if "episode" in extras:
-                            ep_infos.append(extras["episode"])
-                        elif "log" in extras:
-                            ep_infos.append(extras["log"])
+                    # # Logging bookkeeping (minimal, follow base behavior)
+                    # if self.log_dir is not None:
+                    #     if "episode" in extras:
+                    #         ep_infos.append(extras["episode"])
+                    #     elif "log" in extras:
+                    #         ep_infos.append(extras["log"])
 
-                        # accumulate full rewards (existing behaviour)
-                        if getattr(self.alg, "rnd", None):
-                            cur_ereward_sum += rewards
-                            cur_ireward_sum += intrinsic_rewards
-                            cur_reward_sum += rewards + intrinsic_rewards
-                        else:
-                            cur_reward_sum += rewards
+                    #     # accumulate full rewards (existing behaviour)
+                    #     if getattr(self.alg, "rnd", None):
+                    #         cur_ereward_sum += rewards
+                    #         cur_ireward_sum += intrinsic_rewards
+                    #         cur_reward_sum += rewards + intrinsic_rewards
+                    #     else:
+                    #         cur_reward_sum += rewards
 
-                        # accumulate non-expert-only rewards: those envs where expert was NOT used
-                        # ensure expert_mask is on the runner device for indexing
-                        try:
-                            mask_runner = expert_mask.to(self.device)
-                        except Exception:
-                            mask_runner = torch.zeros(self.env.num_envs, dtype=torch.bool, device=self.device)
-                        nonexpert_inds = (~mask_runner).nonzero(as_tuple=False).squeeze(-1)
-                        if nonexpert_inds.numel() > 0:
-                            cur_nonexpert_reward_sum[nonexpert_inds] += rewards[nonexpert_inds]
-                            cur_nonexpert_episode_length[nonexpert_inds] += 1
-                        cur_episode_length += 1
-                        new_ids = (dones > 0).nonzero(as_tuple=False)
-                        rewbuffer.extend(cur_reward_sum[new_ids][:, 0].cpu().numpy().tolist())
-                        lenbuffer.extend(cur_episode_length[new_ids][:, 0].cpu().numpy().tolist())
-                        cur_reward_sum[new_ids] = 0
-                        cur_episode_length[new_ids] = 0
+                    #     # accumulate non-expert-only rewards: those envs where expert was NOT used
+                    #     # ensure expert_mask is on the runner device for indexing
+                    #     try:
+                    #         mask_runner = expert_mask.to(self.device)
+                    #     except Exception:
+                    #         mask_runner = torch.zeros(self.env.num_envs, dtype=torch.bool, device=self.device)
+                    #     nonexpert_inds = (~mask_runner).nonzero(as_tuple=False).squeeze(-1)
+                    #     if nonexpert_inds.numel() > 0:
+                    #         cur_nonexpert_reward_sum[nonexpert_inds] += rewards[nonexpert_inds]
+                    #         cur_nonexpert_episode_length[nonexpert_inds] += 1
+                    #     cur_episode_length += 1
+                    #     new_ids = (dones > 0).nonzero(as_tuple=False)
+                    #     rewbuffer.extend(cur_reward_sum[new_ids][:, 0].cpu().numpy().tolist())
+                    #     lenbuffer.extend(cur_episode_length[new_ids][:, 0].cpu().numpy().tolist())
+                    #     cur_reward_sum[new_ids] = 0
+                    #     cur_episode_length[new_ids] = 0
 
-                        # finalize and log non-expert episodic returns/lengths for finished envs
-                        if new_ids.numel() > 0:
-                            nonexpert_vals = cur_nonexpert_reward_sum[new_ids][:, 0].cpu().numpy().tolist()
-                            nonexpert_lens = cur_nonexpert_episode_length[new_ids][:, 0].cpu().numpy().tolist()
-                            nonexpert_rewbuffer.extend(nonexpert_vals)
-                            nonexpert_lenbuffer.extend(nonexpert_lens)
-                            cur_nonexpert_reward_sum[new_ids] = 0
-                            cur_nonexpert_episode_length[new_ids] = 0
-                        if getattr(self.alg, "rnd", None):
-                            erewbuffer.extend(cur_ereward_sum[new_ids][:, 0].cpu().numpy().tolist())
-                            irewbuffer.extend(cur_ireward_sum[new_ids][:, 0].cpu().numpy().tolist())
-                            cur_ereward_sum[new_ids] = 0
-                            cur_ireward_sum[new_ids] = 0
+                    #     # finalize and log non-expert episodic returns/lengths for finished envs
+                    #     if new_ids.numel() > 0:
+                    #         nonexpert_vals = cur_nonexpert_reward_sum[new_ids][:, 0].cpu().numpy().tolist()
+                    #         nonexpert_lens = cur_nonexpert_episode_length[new_ids][:, 0].cpu().numpy().tolist()
+                    #         nonexpert_rewbuffer.extend(nonexpert_vals)
+                    #         nonexpert_lenbuffer.extend(nonexpert_lens)
+                    #         cur_nonexpert_reward_sum[new_ids] = 0
+                    #         cur_nonexpert_episode_length[new_ids] = 0
+                    #     if getattr(self.alg, "rnd", None):
+                    #         erewbuffer.extend(cur_ereward_sum[new_ids][:, 0].cpu().numpy().tolist())
+                    #         irewbuffer.extend(cur_ireward_sum[new_ids][:, 0].cpu().numpy().tolist())
+                    #         cur_ereward_sum[new_ids] = 0
+                    #         cur_ireward_sum[new_ids] = 0
 
                 # Compute returns
-                self.alg.compute_returns(obs)
+                # self.alg.compute_returns(obs)
 
             # compute collection time
             collection_time = time.time() - start
@@ -179,6 +190,14 @@ class ExpertOnPolicyRunner(OnPolicyRunner):
             start_learn = time.time()
             loss_dict = self.alg.update()
             learn_time = time.time() - start_learn
+
+            # Compute imitation loss average for logging
+            imitation_loss_value = None
+            try:
+                if imitation_count > 0:
+                    imitation_loss_value = imitation_total_loss / max(1, imitation_count)
+            except Exception:
+                imitation_loss_value = None
 
             # Log and save using parent's mechanisms
             self.current_learning_iteration = it
@@ -191,6 +210,7 @@ class ExpertOnPolicyRunner(OnPolicyRunner):
                     "tot_iter": tot_iter,
                     "num_learning_iterations": num_learning_iterations,
                     "loss_dict": loss_dict,
+                    "imitation_loss": imitation_loss_value,
                     "ep_infos": ep_infos,
                     "rewbuffer": rewbuffer,
                     "lenbuffer": lenbuffer,
@@ -272,6 +292,12 @@ class ExpertOnPolicyRunner(OnPolicyRunner):
                 self.writer.add_scalar(
                     "Train/mean_episode_length/time", statistics.mean(locs["lenbuffer"]), self.tot_time
                 )
+
+
+        if "imitation_loss" in locs:
+            self.writer.add_scalar("Imitation/mean_loss", locs["imitation_loss"], locs["it"])
+        
+        
         str = f" \033[1m Learning iteration {locs['it']}/{locs['tot_iter']} \033[0m "
 
         if len(locs["rewbuffer"]) > 0:

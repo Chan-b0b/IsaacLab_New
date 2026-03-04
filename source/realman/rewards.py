@@ -179,6 +179,6 @@ def grasping_reward(
         gripper_raw = env.action_manager.action[:, -1]
 
     # closed if raw action exceeds threshold
-    closed = gripper_raw >= float(gripper_closed_threshold)
+    closed = gripper_raw <= float(gripper_closed_threshold)
 
     return (close & closed).float()

@@ -52,8 +52,8 @@ wp.init()
 
 class GripperState:
     """States for the gripper."""
-    OPEN = wp.constant(-1.0)
-    CLOSE = wp.constant(1.0)
+    OPEN = wp.constant(1.0)
+    CLOSE = wp.constant(-1.0)
 
 
 class PickPlaceSmState:
@@ -147,7 +147,7 @@ def infer_state_machine(
     elif state == PickPlaceSmState.APPROACH_OBJECT:
         # Move to grasp position (use saved orientation)
         object_pos = wp.transform_get_translation(object_pose[tid])
-        grasp_pos = wp.vec3(object_pos[0], object_pos[1], object_pos[2] + 0.03) 
+        grasp_pos = wp.vec3(object_pos[0], object_pos[1], object_pos[2] + 0.04) 
         des_ee_pose[tid] = wp.transform(grasp_pos, vertical_orientation[tid])
         gripper_state[tid] = GripperState.OPEN
         if distance_below_threshold(
@@ -162,7 +162,7 @@ def infer_state_machine(
     elif state == PickPlaceSmState.GRASP_OBJECT:
         # Close gripper (maintain saved orientation)
         object_pos = wp.transform_get_translation(object_pose[tid])
-        grasp_pos = wp.vec3(object_pos[0], object_pos[1], object_pos[2] + 0.03) 
+        grasp_pos = wp.vec3(object_pos[0], object_pos[1], object_pos[2] + 0.04) 
         des_ee_pose[tid] = wp.transform(grasp_pos, vertical_orientation[tid])
         grasp_pos = wp.vec3(object_pos[0], object_pos[1], object_pos[2]) 
         gripper_state[tid] = GripperState.CLOSE
@@ -288,7 +288,7 @@ class PickPlaceSm:
 
         # Per-environment wait thresholds for state transitions.
         # Columns: [REST, APPROACH_ABOVE_OBJECT, APPROACH_OBJECT, GRASP_OBJECT, LIFT_OBJECT, MOVE_INTERVAL]
-        base_waits = torch.tensor([0.01, 0.5, 0.5, 1, 0.5, 0.5], device=self.device)
+        base_waits = torch.tensor([0.01, 0.1, 0.5, 0.3, 0.1, 0.1], device=self.device)
         if hasattr(self, 'randomize_wait') and self.randomize_wait:
             # randomize ±25%
             rnd = 1.0 + (torch.rand((self.num_envs, 6), device=self.device) - 0.5) * 0.5
@@ -553,6 +553,87 @@ class PickPlaceSm:
         else:
             # Fallback: return Cartesian pose (for debugging)
             return torch.cat([des_ee_pose_cart, self.des_gripper_state.unsqueeze(-1)], dim=-1)
+
+    def compute_ik_actions(self, target_pose: torch.Tensor) -> torch.Tensor:
+        """Compute raw joint actions (arm + gripper) for the given target Cartesian poses.
+
+        Args:
+            target_pose: Tensor of shape (N,7) in format [px,py,pz,w,x,y,z] (w first in quaternion).
+
+        Returns:
+            raw_actions: Tensor of shape (N,8) containing raw arm joint commands and gripper scalar.
+        """
+        # Expect target_pose in same (x,y,z,w) ordering as used by compute()
+
+        # Convert to warp-compatible ordering (x,y,z,w -> x,y,z,w) handled below
+        # target_pose is expected as [px,py,pz,w,x,y,z] (w first), convert to (x,y,z,w)
+        des_ee_pose_cart = target_pose[:, [0, 1, 2, 6, 3, 4, 5]]
+
+        if self.robot is not None and hasattr(self, 'ik_controller'):
+            # Set IK target
+            self.ik_controller.set_command(des_ee_pose_cart)
+            joint_pos = self.robot.data.joint_pos[:, self.arm_joint_ids]
+
+            def get_idx(id_val):
+                return id_val[0] if isinstance(id_val, (list, torch.Tensor)) else id_val
+
+            left_idx = get_idx(self.robot.find_bodies("left_inner_finger")[0])
+            right_idx = get_idx(self.robot.find_bodies("right_inner_finger")[0])
+            ee_idx = get_idx(self.ee_body_id)
+
+            left_pos_w = self.robot.data.body_pos_w[:, left_idx, :]
+            right_pos_w = self.robot.data.body_pos_w[:, right_idx, :]
+            ee_body_pos_w = self.robot.data.body_pos_w[:, ee_idx, :]
+            ee_quat_w = self.robot.data.body_quat_w[:, ee_idx, :]
+
+            tcp_pos_w = (left_pos_w + right_pos_w) / 2.0
+
+            tcp_pos_b, tcp_quat_b = subtract_frame_transforms(
+                self.robot.data.root_pos_w, self.robot.data.root_quat_w, tcp_pos_w, ee_quat_w
+            )
+
+            body_pos_b, body_quat_b = subtract_frame_transforms(
+                self.robot.data.root_pos_w, self.robot.data.root_quat_w, ee_body_pos_w, ee_quat_w
+            )
+
+            jacobian_full = self.robot.root_physx_view.get_jacobians()
+            jacobian_body_w = jacobian_full[:, ee_idx, :, self.arm_joint_ids]
+
+            Jv_w = jacobian_body_w[:, 0:3, :]
+            Jw_w = jacobian_body_w[:, 3:6, :]
+
+            def skew_matrix(vec):
+                N = vec.shape[0]
+                S = torch.zeros((N, 3, 3), device=vec.device, dtype=vec.dtype)
+                S[:, 0, 1], S[:, 0, 2], S[:, 1, 0] = -vec[:, 2], vec[:, 1], vec[:, 2]
+                S[:, 1, 2], S[:, 2, 0], S[:, 2, 1] = -vec[:, 0], -vec[:, 1], vec[:, 0]
+                return S
+
+            r_w = tcp_pos_w - ee_body_pos_w
+            Jp_tcp_w = Jv_w - torch.matmul(skew_matrix(r_w), Jw_w)
+
+            R_w2b = matrix_from_quat(quat_inv(self.robot.data.root_quat_w))
+            J_linear_b = torch.matmul(R_w2b, Jp_tcp_w)
+            J_angular_b = torch.matmul(R_w2b, Jw_w)
+            jacobian_tcp = torch.cat([J_linear_b, J_angular_b], dim=1)
+
+            joint_pos_des = self.ik_controller.compute(
+                tcp_pos_b, tcp_quat_b, jacobian_tcp, joint_pos
+            )
+
+            gravity_forces = self.robot.root_physx_view.get_gravity_compensation_forces()
+            self.robot.set_joint_effort_target(gravity_forces[:, self.arm_joint_ids], joint_ids=self.arm_joint_ids)
+
+            scale = 0.5
+            offset = self.robot.data.default_joint_pos[:, self.arm_joint_ids]
+            raw_arm_action = (joint_pos_des - offset) / scale
+
+            gripper_raw = torch.ones((raw_arm_action.shape[0], 1), device=raw_arm_action.device)
+            return torch.cat([raw_arm_action, gripper_raw], dim=-1)
+        else:
+            # Fallback: return Cartesian target + open gripper
+            gripper_raw = torch.ones((des_ee_pose_cart.shape[0], 1), device=des_ee_pose_cart.device)
+            return torch.cat([des_ee_pose_cart, gripper_raw], dim=-1)
 
     def _quat_wxyz_to_euler(self, qwxyz: torch.Tensor):
         # qwxyz: (N,4) in (w,x,y,z)

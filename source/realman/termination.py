@@ -31,7 +31,7 @@ def object_out_of_bounds(
     
     # Get current object position (root body position)
     current_pos = asset.data.root_pos_w[:, :2]  # Only XY coordinates, shape: (num_envs, 2)
-    
+    height = asset.data.root_pos_w[:, 2]  # Z coordinate (height), shape: (num_envs,)
     # Get initial spawn position from the object's default state
     # default_root_state contains [pos(3), quat(4), lin_vel(3), ang_vel(3)]
     initial_pos = asset.data.default_root_state[:, :2] + env.scene.env_origins[:,:2] # Only XY coordinates from spawn position
@@ -39,5 +39,6 @@ def object_out_of_bounds(
     # Calculate distance from initial position
     distance = torch.norm(current_pos - initial_pos, dim=1)
     
+    
     # Return True for environments where object is too far
-    return distance > maximum_distance
+    return (distance > maximum_distance) & (height < 0.05)

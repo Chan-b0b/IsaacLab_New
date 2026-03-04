@@ -98,3 +98,30 @@ class modify_object_spawn_range(ManagerTermBase):
         env.event_manager.set_term_cfg(event_term_name, self._event_term_cfg)
         
         return new_pose_range
+
+
+class multiply_reward_weight(ManagerTermBase):
+    """Curriculum that modifies the reward weight based on a step-wise schedule."""
+
+    def __init__(self, cfg: CurriculumTermCfg, env: ManagerBasedRLEnv):
+        super().__init__(cfg, env)
+
+        # obtain term configuration
+        term_name = cfg.params["term_name"]
+        self._term_cfg = env.reward_manager.get_term_cfg(term_name)
+
+    def __call__(
+        self,
+        env: ManagerBasedRLEnv,
+        env_ids: Sequence[int],
+        term_name: str,
+        weight: float,
+        num_steps: int,
+    ) -> float:
+        # update term settings
+        if env.common_step_counter % num_steps == 0:
+            self._term_cfg.weight *= weight
+            env.reward_manager.set_term_cfg(term_name, self._term_cfg)
+
+        return self._term_cfg.weight
+    

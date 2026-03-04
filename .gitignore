@@ -77,3 +77,6 @@ datasets
 *.npz
 
 # Unitree robot definitions (modified locally)
+
+#ik_generate
+ik_generate/
