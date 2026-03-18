@@ -56,7 +56,7 @@ _build
 
 # RL-Games
 **/runs/*
-# **/logs/*
+**/logs/*
 **/recordings/*
 **/events.out.tfevents.*
 
