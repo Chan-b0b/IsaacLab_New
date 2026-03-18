@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from isaaclab.assets import Articulation
 from isaaclab.managers import SceneEntityCfg
+import isaaclab.utils.math as math_utils
 
 if TYPE_CHECKING:
     from isaaclab.envs import ManagerBasedRLEnv
@@ -57,3 +58,36 @@ def apply_constant_force_to_torso(
         body_ids=asset_cfg.body_ids,
         env_ids=env_ids,
     )
+
+def reset_joints_default_by_offset(
+    env: ManagerBasedRLEnv,
+    env_ids: torch.Tensor,
+    position_range: tuple[float, float],
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+):
+    """Reset the robot joints with offsets around the default position and velocity by the given ranges.
+
+    This function samples random values from the given ranges and biases the default joint positions and velocities
+    by these values. The biased values are then set into the physics simulation.
+    """
+    # extract the used quantities (to enable type-hinting)
+    asset: Articulation = env.scene[asset_cfg.name]
+
+    current_default_joint_pos_all_dofs = asset.data.default_joint_pos[env_ids].clone()
+
+    joint_indices_to_modify = asset_cfg.joint_ids
+
+    selected_joint_pos = current_default_joint_pos_all_dofs[:, joint_indices_to_modify]
+
+    biased_joint_pos = selected_joint_pos + math_utils.sample_uniform(*position_range, selected_joint_pos.shape, selected_joint_pos.device)
+
+    joint_pos_limits_all_dofs = asset.data.soft_joint_pos_limits[env_ids]
+    
+    selected_joint_pos_limits = joint_pos_limits_all_dofs[:, joint_indices_to_modify]
+
+    biased_joint_pos = biased_joint_pos.clamp_(selected_joint_pos_limits[..., 0], selected_joint_pos_limits[..., 1])
+
+    current_default_joint_pos_all_dofs[:, joint_indices_to_modify] = biased_joint_pos
+    asset.data.default_joint_pos[env_ids] = current_default_joint_pos_all_dofs
+
+    asset.set_joint_position_target(biased_joint_pos, env_ids=env_ids, joint_ids=asset_cfg.joint_ids)

@@ -22,9 +22,10 @@ Velocity and height tracking rewards.
 def track_height_exp(
     env: ManagerBasedRLEnv, 
     std: float, 
-    command_name: str, 
     asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    command_name: str | None = None, 
     sensor_cfg: SceneEntityCfg | None = None,
+    target_height: float | None = None,
 ) -> torch.Tensor:
     """Reward tracking of height commands using exponential kernel.
     
@@ -34,6 +35,7 @@ def track_height_exp(
         command_name: The name of the command term that contains height at index 3.
         asset_cfg: The asset configuration.
         sensor_cfg: The height scanner sensor configuration for terrain-relative height.
+        target_height: The target height for the robot's base. If provided, this overrides the command.
     
     Returns:
         The reward for tracking the height command.
@@ -42,7 +44,11 @@ def track_height_exp(
     # extract the used quantities (to enable type-hinting)
     asset: RigidObject = env.scene[asset_cfg.name]
     # get height command (index 3 in the command)
-    height_command = env.command_manager.get_command(command_name)[:, 3]
+    
+    if target_height is not None:
+        height_command = torch.full((env.num_envs,), target_height, device=env.device)
+    else:
+        height_command = env.command_manager.get_command(command_name)[:, 3]
     
     # Adjust height command for terrain if sensor is provided
     if sensor_cfg is not None:
