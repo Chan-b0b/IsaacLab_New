@@ -263,7 +263,7 @@ class ObservationsCfg:
             noise=Unoise(n_min=-1.5, n_max=1.5)
         )
         last_action = ObsTerm(func=mdp.last_action, params={"action_name": "JointPositionAction"})
-        gait_phase = ObsTerm(func=mdp.gait_phase, params={"period": 0.8})
+        # gait_phase = ObsTerm(func=mdp.gait_phase, params={"period": 0.8})
 
         def __post_init__(self):
             # self.history_length = 5
@@ -296,7 +296,7 @@ class ObservationsCfg:
             scale=0.01
         )
         last_action = ObsTerm(func=mdp.last_action, params={"action_name": "JointPositionAction"})
-        gait_phase = ObsTerm(func=mdp.gait_phase, params={"period": 0.8})
+        # gait_phase = ObsTerm(func=mdp.gait_phase, params={"period": 0.8})
         # height_scanner = ObsTerm(func=mdp.height_scan,
         #     params={"sensor_cfg": SceneEntityCfg("height_scanner")},
         #     clip=(-1.0, 5.0),

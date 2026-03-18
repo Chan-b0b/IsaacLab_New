@@ -43,11 +43,11 @@ class RewardsTrainCfg:
     # -- task
     track_lin_vel_xy = RewTerm(
         func=mdp.track_lin_vel_xy_yaw_frame_exp,
-        weight=1.0,
+        weight=5.0,
         params={"command_name": "base_velocity", "std": math.sqrt(0.25)},
     )
     track_ang_vel_z = RewTerm(
-        func=mdp.track_ang_vel_z_exp, weight=0.5, params={"command_name": "base_velocity", "std": math.sqrt(0.25)}
+        func=mdp.track_ang_vel_z_exp, weight=3, params={"command_name": "base_velocity", "std": math.sqrt(0.25)}
     )
 
     alive = RewTerm(func=mdp.is_alive, weight=0.15)
@@ -102,16 +102,18 @@ class RewardsTrainCfg:
     )
 
     # -- feet
-    gait = RewTerm(
-        func=mdp.feet_gait,
-        weight=1.5,
-        params={
-            "period": 0.8,
-            "offset": [0.0, 0.5],
-            "threshold": 0.55,
-            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=["left_ankle_roll_link", "right_ankle_roll_link"]),
-        },
-    )
+    # gait = RewTerm(
+    #     func=mdp.feet_gait,
+    #     weight=1.5,
+    #     params={
+    #         "period": 0.8,
+    #         "offset": [0.0, 0.5],
+    #         "threshold": 0.55,
+    #         "sensor_cfg": SceneEntityCfg("contact_forces", body_names=["left_ankle_roll_link", "right_ankle_roll_link"]),
+    #     },
+    # )
+    gait = None
+    
     feet_slide = RewTerm(
         func=mdp.feet_slide,
         weight=-0.2,
@@ -122,7 +124,7 @@ class RewardsTrainCfg:
     )
     feet_clearance = RewTerm(
         func=mdp.foot_clearance_reward,
-        weight=1.5,
+        weight=0.5,
         params={
             "std": 0.08,
             "tanh_mult": 1.5,

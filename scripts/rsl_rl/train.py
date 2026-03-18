@@ -200,7 +200,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         print(f"[INFO]: Loading model checkpoint from: {resume_path}")
         # load previously trained model
         runner.load(resume_path)
-
+    
     # dump the configuration into log-directory
     dump_yaml(os.path.join(log_dir, "params", "env.yaml"), env_cfg)
     dump_yaml(os.path.join(log_dir, "params", "agent.yaml"), agent_cfg)
@@ -225,6 +225,6 @@ if __name__ == "__main__":
     simulation_app.close()
 
 
-# python scripts/rsl_rl/train.py --headless --task Unitree-H1-2-Velocity-Train --num_envs 9096 --run_name H200 --max_iterations 50000 --video --video_length 200 --video_interval 2000 --distributed --max_iterations 50000 --device cuda:0,cuda:1,cuda:2,cuda:3
-# python scripts/rsl_rl/play.py --task Unitree-H1-2-Velocity-Train --num_envs 24 --checkpoint
+# python scripts/rsl_rl/train.py --headless --task Unitree-H1-2-Velocity-Train-Sym --num_envs 18192 --run_name no_gait_more_reward --max_iterations 200000 --device cuda:2
+# python scripts/rsl_rl/play.py --task Unitree-H1-2-Velocity-Train-Sym --num_envs 24 --checkpoint
 # CUDA_VISIBLE_DEVICES=0,1,2,3,4,5 
