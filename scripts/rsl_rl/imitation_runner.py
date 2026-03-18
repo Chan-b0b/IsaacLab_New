@@ -10,18 +10,24 @@ from tensordict import TensorDict
 from rsl_rl.runners import OnPolicyRunner
 
 
-ExpertProvider = Callable[[TensorDict, int, int], Tuple[torch.Tensor, torch.Tensor]]
-# Signature: (obs, step_global_counter, tot_timesteps) -> (indices, actions)
+ExpertProvider = Callable[[TensorDict, int, int], Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]]
+# Signature: (obs, step_global_counter, tot_timesteps) -> (indices, expert_joint_actions, expert_target_pos, expert_target_ori)
 
 
 class ExpertImitationRunner(OnPolicyRunner):
-    """OnPolicyRunner subclass that can inject expert actions during rollout.
+    """OnPolicyRunner subclass that trains a model to output target poses via behavior cloning.
+
+    The model outputs 8D actions: [px, py, pz, qw, qx, qy, qz, gripper]
+    where first 7D are target end-effector pose and last 1D is gripper command.
+    The 7D pose is converted to joint actions via IK (compute_ik_actions) before env.step(),
+    then concatenated with the gripper command to form the full 8D action.
 
     Provide an `expert_provider` callable to `learn()` which returns a tuple
-    `(indices, actions)` to overwrite the agent actions for those env indices
-    for the current step. `indices` can be a 1D LongTensor of environment indices
-    or a boolean mask of shape `(num_envs,)`. `actions` must match the action
-    shape for the selected indices.
+    `(indices, expert_joint_actions, expert_target_pos, expert_target_ori)` where:
+      - indices: env indices or boolean mask for expert envs
+      - expert_joint_actions: raw joint actions from the expert (for env.step)
+      - expert_target_pos: (N, 3) target positions for BC supervision
+      - expert_target_ori: (N, 4) target quaternions for BC supervision
     """
 
     def learn(
@@ -30,6 +36,7 @@ class ExpertImitationRunner(OnPolicyRunner):
         init_at_random_ep_len: bool = False,
         expert_provider: ExpertProvider | None = None,
         expert_reset: Callable[[torch.Tensor], None] | None = None,
+        expert_sm: Any = None,  # Optional expert state machine for providing expert actions via compute_ik_actions
     ) -> None:
         # Mostly copy parent's learn logic but allow action injection per step
         self._prepare_logging_writer()
@@ -80,14 +87,23 @@ class ExpertImitationRunner(OnPolicyRunner):
             # Rollout
             for step_idx in range(self.num_steps_per_env):
                 # Sample actions (no grad for action selection)
-                pred_actions = self.alg.policy.actor_output(obs)
-                actions = pred_actions.clone().to(self.env.device).detach()
+                # Model outputs 8D: [px, py, pz, qw, qx, qy, qz, gripper]
+                pred_action_8d = self.alg.policy.actor_output(obs)
+                pred_pose_7d = pred_action_8d[:, :7]  # First 7D are target pose
+                pred_gripper = pred_action_8d[:, 7:8]  # Last 1D is gripper
+                
+                # Convert predicted 7D pose to joint actions via IK
+                ik_actions = expert_sm.compute_ik_actions(pred_pose_7d)
+                actions = torch.cat([ik_actions[:, :7], pred_gripper], dim=-1)
+                actions = actions.to(self.env.device).detach()
 
-                # Expert injection: ask provider for indices and expert actions
+                # Expert injection: ask provider for indices, actions, and target poses
                 # default: no env uses expert this step
                 expert_mask = torch.zeros(self.env.num_envs, dtype=torch.bool, device=actions.device)
                 if expert_provider is not None:
-                    expert_idx, expert_actions = expert_provider(obs, step_idx, self.tot_timesteps)
+                    expert_idx, expert_joint_actions, expert_target_pos, expert_target_ori = expert_provider(
+                        obs, step_idx, self.tot_timesteps
+                    )
                     if expert_idx is not None:
                         # normalize index format to boolean mask on actions.device
                         if isinstance(expert_idx, torch.BoolTensor) or (
@@ -95,26 +111,35 @@ class ExpertImitationRunner(OnPolicyRunner):
                         ):
                             mask = expert_idx.to(device=actions.device)
                             expert_mask = mask
+                            idx = mask.nonzero(as_tuple=False).squeeze(-1)
                             if mask.any():
-                                actions[mask] = expert_actions.to(actions.device)
+                                actions[mask] = expert_joint_actions[idx].to(actions.device)
                         else:
                             idx = expert_idx.long().to(device=actions.device)
+                            if idx.numel() > 0:
+                                expert_mask[idx] = True
+                                actions[idx] = expert_joint_actions[idx].to(actions.device)
 
-                        actions[idx] = expert_actions.to(actions.device)
-                        # Record actor observations (concatenated actor inputs) and expert actions for BC
-                        # index obs (TensorDict) to selected envs
-                        sel_obs = obs[idx]
-                        expert_dev = expert_actions.to(self.device)
-                        # Compute actor output and perform an immediate BC update
-
-
-                        loss = mse(pred_actions[torch.arange(len(expert_idx))], expert_dev.to(pred_actions.device).clone())
-                        imitation_optimizer.zero_grad()
-                        loss.backward()
-                        torch.nn.utils.clip_grad_norm_(actor_params, getattr(self, "max_grad_norm", 1.0))
-                        imitation_optimizer.step()
-                        imitation_total_loss += loss.item() * actions.shape[0]
-                        imitation_count += actions.shape[0]
+                        # Behavior cloning: supervise predicted 8D action on expert actions
+                        if idx.numel() > 0:
+                            # Expert target pose is [pos(3), ori(4), gripper(1)]
+                            # Create expert target action: [pos, ori, gripper_cmd=1 (open)]
+                            expert_target_action = torch.cat(
+                                [expert_target_pos, expert_target_ori, expert_joint_actions[:,-1:]], 
+                                dim=-1
+                            ).to(self.device)  # (num_expert_envs, 8)
+                            
+                            # Get predictions for expert envs only
+                            pred_action = pred_action_8d  # (num_expert_envs, 8)
+                            
+                            # MSE loss on 8D action output (7D pose + 1D gripper)
+                            loss = mse(pred_action, expert_target_action)
+                            imitation_optimizer.zero_grad()
+                            loss.backward()
+                            torch.nn.utils.clip_grad_norm_(actor_params, getattr(self, "max_grad_norm", 1.0))
+                            imitation_optimizer.step()
+                            imitation_total_loss += loss.item() * idx.numel()
+                            imitation_count += idx.numel()
 
 
                     # Step the environment

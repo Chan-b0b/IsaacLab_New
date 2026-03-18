@@ -292,7 +292,7 @@ class RealmanPickPlaceEnvCfg(LiftEnvCfg):
         self.curriculum.expert_percentage = CurrTerm(
             func=modify_expert_percentage,
             params={
-                "start_percentage": 0.99,  # Start with 99% expert
+                "start_percentage": 0.5,  # Start with 50% expert
                 "end_percentage": 0.0,     # Fade to 0% expert
                 "num_steps": 2000000         # Complete fade-out by 1M steps
             }

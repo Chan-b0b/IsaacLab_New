@@ -34,6 +34,8 @@ class ExpertOnPolicyRunner(OnPolicyRunner):
         init_at_random_ep_len: bool = False,
         expert_provider: ExpertProvider | None = None,
         expert_reset: Callable[[torch.Tensor], None] | None = None,
+        expert_sm: Any = None,  # Optional expert state machine for providing expert actions via compute_ik_actions
+
     ) -> None:
         # Mostly copy parent's learn logic but allow action injection per step
         self._prepare_logging_writer()
@@ -78,33 +80,35 @@ class ExpertOnPolicyRunner(OnPolicyRunner):
             with torch.inference_mode():
                 for step_idx in range(self.num_steps_per_env):
                     # Sample actions
-                    actions = self.alg.act(obs)
+                    pred_action_8d = self.alg.act(obs)
+                    # pred_action_8d = self.alg.policy.actor_output(obs)
+                    pred_pose_7d = pred_action_8d[:, :7]  # First 7D are target pose
+                    pred_gripper = pred_action_8d[:, 7:8]  # Last 1D is gripper
+                    ik_actions = expert_sm.compute_ik_actions(pred_pose_7d)
+                    actions = torch.cat([ik_actions[:, :7], pred_gripper], dim=-1)
+                    actions = actions.to(self.env.device).detach()
 
                     # Expert injection: ask provider for indices, actions, and target poses
                     # default: no env uses expert this step
                     expert_mask = torch.zeros(self.env.num_envs, dtype=torch.bool, device=actions.device)
                     if expert_provider is not None:
-                        try:
-                            expert_idx, expert_actions, expert_target_pos, expert_target_ori = expert_provider(
-                                obs, step_idx, self.tot_timesteps
-                            )
-                            if expert_idx is not None:
-                                # normalize index format to boolean mask on actions.device
-                                if isinstance(expert_idx, torch.BoolTensor) or (
-                                    isinstance(expert_idx, torch.Tensor) and expert_idx.dtype == torch.bool
-                                ):
-                                    mask = expert_idx.to(device=actions.device)
-                                    expert_mask = mask
-                                    if mask.any():
-                                        actions[mask] = expert_actions.to(actions.device)
-                                else:
-                                    idx = expert_idx.long().to(device=actions.device)
-                                    if idx.numel() > 0:
-                                        expert_mask[idx] = True
-                                        actions[idx] = expert_actions.to(actions.device)
-                        except Exception:
-                            # swallow provider errors to avoid breaking rollout
-                            expert_mask = torch.zeros(self.env.num_envs, dtype=torch.bool, device=actions.device)
+                        expert_idx, expert_actions, expert_target_pos, expert_target_ori = expert_provider(
+                            obs, step_idx, self.tot_timesteps
+                        )
+                        if expert_idx is not None:
+                            # normalize index format to boolean mask on actions.device
+                            if isinstance(expert_idx, torch.BoolTensor) or (
+                                isinstance(expert_idx, torch.Tensor) and expert_idx.dtype == torch.bool
+                            ):
+                                mask = expert_idx.to(device=actions.device)
+                                expert_mask = mask
+                                if mask.any():
+                                    actions[mask] = expert_actions.to(actions.device)
+                            else:
+                                idx = expert_idx.long().to(device=actions.device)
+                                if idx.numel() > 0:
+                                    expert_mask[idx] = True
+                                    actions[idx] = expert_actions.to(actions.device)
 
                     # Step the environment
                     obs, rewards, dones, extras = self.env.step(actions.to(self.env.device))
@@ -114,12 +118,9 @@ class ExpertOnPolicyRunner(OnPolicyRunner):
 
                     # Reset expert state machine for finished envs if callback provided
                     if expert_reset is not None:
-                        try:
-                            finished = dones.nonzero(as_tuple=False).squeeze(-1)
-                            if finished.numel() > 0:
-                                expert_reset(finished)
-                        except Exception:
-                            pass
+                        finished = dones.nonzero(as_tuple=False).squeeze(-1)
+                        if finished.numel() > 0:
+                            expert_reset(finished)
 
                     intrinsic_rewards = getattr(self.alg, "intrinsic_rewards", None)
 

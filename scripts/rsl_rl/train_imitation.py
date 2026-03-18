@@ -213,6 +213,10 @@ def main():
                 torch.cat([object_position, object_orientation], dim=-1),
                 torch.cat([target_position, target_orientation], dim=-1),
             )
+            des_ee_pose_cart = expert_sm.des_ee_pose[:, [0, 1, 2, 6, 3, 4, 5]]
+            target_position = des_ee_pose_cart[:,:3]
+            target_orientation = des_ee_pose_cart[:,3:]
+
             # Select expert envs based on the expert percentage per-environment
             expert_pct = getattr(env.unwrapped, "_expert_percentage", 1.0)
             if expert_pct >= 1.0:
@@ -236,7 +240,7 @@ def main():
             #     idx = torch.randint(0, n_envs, (1,), device=expert_actions.device, dtype=torch.long)
             # return idx, expert_actions[idx]
 
-            return torch.arange(num_expert_envs), expert_actions[:num_expert_envs], target_position[:num_expert_envs], target_orientation[:num_expert_envs]
+            return torch.arange(num_expert_envs), expert_actions, target_position, target_orientation
     
     # Log expert percentage
     def log_expert_percentage():
@@ -286,6 +290,7 @@ def main():
         init_at_random_ep_len=True,
         expert_provider=expert_provider,
         expert_reset=lambda idx: expert_sm.reset_idx(idx),
+        expert_sm=expert_sm
     )
     # Close environment and SimulationApp
     env.close()

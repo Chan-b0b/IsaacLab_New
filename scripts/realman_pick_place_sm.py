@@ -567,7 +567,7 @@ class PickPlaceSm:
 
         # Convert to warp-compatible ordering (x,y,z,w -> x,y,z,w) handled below
         # target_pose is expected as [px,py,pz,w,x,y,z] (w first), convert to (x,y,z,w)
-        des_ee_pose_cart = target_pose[:, [0, 1, 2, 6, 3, 4, 5]]
+        des_ee_pose_cart = target_pose
 
         if self.robot is not None and hasattr(self, 'ik_controller'):
             # Set IK target
@@ -628,12 +628,10 @@ class PickPlaceSm:
             offset = self.robot.data.default_joint_pos[:, self.arm_joint_ids]
             raw_arm_action = (joint_pos_des - offset) / scale
 
-            gripper_raw = torch.ones((raw_arm_action.shape[0], 1), device=raw_arm_action.device)
-            return torch.cat([raw_arm_action, gripper_raw], dim=-1)
+            return raw_arm_action
         else:
             # Fallback: return Cartesian target + open gripper
-            gripper_raw = torch.ones((des_ee_pose_cart.shape[0], 1), device=des_ee_pose_cart.device)
-            return torch.cat([des_ee_pose_cart, gripper_raw], dim=-1)
+            return des_ee_pose_cart
 
     def _quat_wxyz_to_euler(self, qwxyz: torch.Tensor):
         # qwxyz: (N,4) in (w,x,y,z)

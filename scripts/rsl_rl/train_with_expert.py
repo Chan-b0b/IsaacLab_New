@@ -186,7 +186,7 @@ def main():
     def expert_provider(obs, step_idx, tot_timesteps):
         num_expert_envs = get_expert_env_count()
         if num_expert_envs <= 0:
-            return None, None
+            return None, None, None, None
         with torch.inference_mode():
             robot = env.unwrapped.scene["robot"]
             ee_frame_tf: FrameTransformer = env.unwrapped.scene["ee_frame"]
@@ -219,10 +219,14 @@ def main():
             expert_pct = getattr(env.unwrapped, "_expert_percentage", 1.0)
             if expert_pct >= 1.0:
                 idx = torch.arange(env.unwrapped.num_envs, device=expert_actions.device, dtype=torch.long)
-                return idx, expert_actions[idx]
+                expert_idx = idx
+                expert_joint_actions = expert_actions[idx]
+                expert_target_pos = target_position[idx]
+                expert_target_ori = target_orientation[idx]
+                return expert_idx, expert_joint_actions, expert_target_pos, expert_target_ori
 
             if expert_pct <= 0.0:
-                return None, None
+                return None, None, None, None
 
             # Bernoulli selection per environment (on the action tensor device)
             # n_envs = env.unwrapped.num_envs
@@ -234,7 +238,7 @@ def main():
             #     idx = torch.randint(0, n_envs, (1,), device=expert_actions.device, dtype=torch.long)
             # return idx, expert_actions[idx]
 
-            return torch.arange(num_expert_envs), expert_actions[:num_expert_envs]
+            return torch.arange(num_expert_envs), expert_actions[:num_expert_envs], target_position[:num_expert_envs], target_orientation[:num_expert_envs]
     
     # Log expert percentage
     def log_expert_percentage():
@@ -284,6 +288,7 @@ def main():
         init_at_random_ep_len=True,
         expert_provider=expert_provider,
         expert_reset=lambda idx: expert_sm.reset_idx(idx),
+        expert_sm=expert_sm
     )
     # Close environment and SimulationApp
     env.close()
