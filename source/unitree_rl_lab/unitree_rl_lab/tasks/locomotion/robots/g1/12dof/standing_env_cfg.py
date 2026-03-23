@@ -173,9 +173,9 @@ class EventCfg:
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
             "force_range": {
-                "x": (-3.0, 3.0),
-                "y": (-3.0, 3.0),
-                "z": (-3.0, 3.0),
+                "x": (0.0, 0.0),
+                "y": (0.0, 0.0),
+                "z": (0.0, 0.0),
             },
             "zero_force_percentage": 0.5,  # 30% of environments receive zero force
         },
@@ -184,7 +184,7 @@ class EventCfg:
     randomize_upper_body_pose = EventTerm(
         func=mdp.reset_joints_default_by_offset,
         mode="interval",
-        interval_range_s=(1.0, 12.0),  # Random interval between 5 and 12 seconds
+        interval_range_s=(0.02, 5),  # Random interval between 5 and 12 seconds
         params={
             "asset_cfg": SceneEntityCfg(
                 "robot",
@@ -199,7 +199,39 @@ class EventCfg:
                     "right_elbow_joint",
                 ],
             ),
-            "position_range": (-0.5, 0.5),  # Random offset range in radians (~±17 degrees)
+            "position_range": (-1, 1),  # Random offset range in radians (~±17 degrees)
+        },
+    )
+    
+    fix_waist = EventTerm(
+        func=mdp.reset_joints_default_by_offset,
+        mode="interval",
+        interval_range_s=(0.02, 0.02),  # Random interval between 5 and 12 seconds
+        params={
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                joint_names=[
+                    "waist_pitch_joint",
+                    "waist_roll_joint",
+                ],
+            ),
+            "position_range": (0.0, 0.0),  # Random offset range in radians (~±17 degrees)
+        },
+    )
+
+    
+    random_waist_yaw = EventTerm(
+        func=mdp.reset_joints_default_by_offset,
+        mode="interval",
+        interval_range_s=(0.02, 5),  # Random interval between 5 and 12 seconds
+        params={
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                joint_names=[
+                    "waist_yaw_joint"
+                    ],
+            ),
+            "position_range": (-1, 1),  # Random offset range in radians (~±17 degrees)
         },
     )
     
