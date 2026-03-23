@@ -442,25 +442,7 @@ class RewardsCfg:
             })
     action_rate = RewTerm(
         func=mdp.action_rate_l2, 
-        weight=-0.005,
-        params={
-            "asset_cfg": SceneEntityCfg(
-                "robot",
-                joint_names=[
-                    "left_hip_yaw_joint", 
-                    "left_hip_pitch_joint", 
-                    "left_hip_roll_joint", 
-                    "left_knee_joint", 
-                    "left_ankle_pitch_joint", 
-                    "left_ankle_roll_joint", 
-                    "right_hip_yaw_joint", 
-                    "right_hip_pitch_joint", 
-                    "right_hip_roll_joint", 
-                    "right_knee_joint", 
-                    "right_ankle_pitch_joint", 
-                    "right_ankle_roll_joint", 
-                ],)
-            }
+        weight=-0.005
         )
     dof_pos_limits = RewTerm(
         func=mdp.joint_pos_limits, 
