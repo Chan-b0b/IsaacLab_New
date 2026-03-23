@@ -398,11 +398,112 @@ class RewardsCfg:
     # -- base
     # base_linear_velocity = RewTerm(func=mdp.lin_vel_z_l2, weight=-2.0)
     base_angular_velocity = RewTerm(func=mdp.ang_vel_xy_l2, weight=-0.05)
-    joint_vel = RewTerm(func=mdp.joint_vel_l2, weight=-1e-5)
-    joint_acc = RewTerm(func=mdp.joint_acc_l2, weight=-2.5e-7)
-    action_rate = RewTerm(func=mdp.action_rate_l2, weight=-0.005)
-    dof_pos_limits = RewTerm(func=mdp.joint_pos_limits, weight=-5.0)
-    energy = RewTerm(func=mdp.energy, weight=-2e-5)
+    joint_vel = RewTerm(
+        func=mdp.joint_vel_l2, 
+        weight=-1e-5,
+        params={
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                joint_names=[
+                    "left_hip_yaw_joint", 
+                    "left_hip_pitch_joint", 
+                    "left_hip_roll_joint", 
+                    "left_knee_joint", 
+                    "left_ankle_pitch_joint", 
+                    "left_ankle_roll_joint", 
+                    "right_hip_yaw_joint", 
+                    "right_hip_pitch_joint", 
+                    "right_hip_roll_joint", 
+                    "right_knee_joint", 
+                    "right_ankle_pitch_joint", 
+                    "right_ankle_roll_joint", 
+                ],)
+            })
+    joint_acc = RewTerm(
+        func=mdp.joint_acc_l2, 
+        weight=-2.5e-7,
+        params={
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                joint_names=[
+                    "left_hip_yaw_joint", 
+                    "left_hip_pitch_joint", 
+                    "left_hip_roll_joint", 
+                    "left_knee_joint", 
+                    "left_ankle_pitch_joint", 
+                    "left_ankle_roll_joint", 
+                    "right_hip_yaw_joint", 
+                    "right_hip_pitch_joint", 
+                    "right_hip_roll_joint", 
+                    "right_knee_joint", 
+                    "right_ankle_pitch_joint", 
+                    "right_ankle_roll_joint", 
+                ],)
+            })
+    action_rate = RewTerm(
+        func=mdp.action_rate_l2, 
+        weight=-0.005,
+        params={
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                joint_names=[
+                    "left_hip_yaw_joint", 
+                    "left_hip_pitch_joint", 
+                    "left_hip_roll_joint", 
+                    "left_knee_joint", 
+                    "left_ankle_pitch_joint", 
+                    "left_ankle_roll_joint", 
+                    "right_hip_yaw_joint", 
+                    "right_hip_pitch_joint", 
+                    "right_hip_roll_joint", 
+                    "right_knee_joint", 
+                    "right_ankle_pitch_joint", 
+                    "right_ankle_roll_joint", 
+                ],)
+            }
+        )
+    dof_pos_limits = RewTerm(
+        func=mdp.joint_pos_limits, 
+        weight=-5.0,
+        params={
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                joint_names=[
+                    "left_hip_yaw_joint", 
+                    "left_hip_pitch_joint", 
+                    "left_hip_roll_joint", 
+                    "left_knee_joint", 
+                    "left_ankle_pitch_joint", 
+                    "left_ankle_roll_joint", 
+                    "right_hip_yaw_joint", 
+                    "right_hip_pitch_joint", 
+                    "right_hip_roll_joint", 
+                    "right_knee_joint", 
+                    "right_ankle_pitch_joint", 
+                    "right_ankle_roll_joint", 
+                ],)
+            })
+    energy = RewTerm(
+        func=mdp.energy, 
+        weight=-2e-5,
+        params={
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                joint_names=[
+                    "left_hip_yaw_joint", 
+                    "left_hip_pitch_joint", 
+                    "left_hip_roll_joint", 
+                    "left_knee_joint", 
+                    "left_ankle_pitch_joint", 
+                    "left_ankle_roll_joint", 
+                    "right_hip_yaw_joint", 
+                    "right_hip_pitch_joint", 
+                    "right_hip_roll_joint", 
+                    "right_knee_joint", 
+                    "right_ankle_pitch_joint", 
+                    "right_ankle_roll_joint", 
+                ],)
+            })
 
     joint_deviation_legs = RewTerm(
         func=mdp.joint_deviation_l1,
