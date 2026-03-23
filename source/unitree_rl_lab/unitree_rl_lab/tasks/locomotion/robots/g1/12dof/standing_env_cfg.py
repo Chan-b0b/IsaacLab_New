@@ -111,6 +111,16 @@ class EventCfg:
         },
     )
 
+    add_base_mass_wrist = EventTerm(
+        func=mdp.randomize_rigid_body_mass,
+        mode="reset",
+        params={
+            "asset_cfg": SceneEntityCfg("robot", body_names=".*wrist.*"),
+            "mass_distribution_params": (-0.05, 5.0),
+            "operation": "add",
+        },
+    )
+
     # reset
     base_external_force_torque = EventTerm(
         func=mdp.apply_external_force_torque,
@@ -147,25 +157,25 @@ class EventCfg:
         },
     )
 
-    # interval events
-    push_robot = EventTerm(
-        func=mdp.push_by_setting_velocity,
-        mode="interval",
-        interval_range_s=(2.0, 10.0),
-        params={
-            "velocity_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5)}},
-    )
+    # # interval events
+    # push_robot = EventTerm(
+    #     func=mdp.push_by_setting_velocity,
+    #     mode="interval",
+    #     interval_range_s=(2.0, 10.0),
+    #     params={
+    #         "velocity_range": {"x": (-0.3, 0.3), "y": (-0.3, 0.3)}},
+    # )
 
     apply_torso_force = EventTerm(
         func=mdp.apply_constant_force_to_torso,
         mode="interval",
-        interval_range_s=(3.0, 8.0),  # Random duration between 3 and 8 seconds
+        interval_range_s=(0.1, 8.0),  # Random duration between 3 and 8 seconds
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
             "force_range": {
-                "x": (-30.0, 30.0),
-                "y": (-30.0, 30.0),
-                "z": (-10.0, 10.0),
+                "x": (-20.0, 20.0),
+                "y": (-20.0, 20.0),
+                "z": (-20.0, 20.0),
             },
             "zero_force_percentage": 0.5,  # 30% of environments receive zero force
         },
@@ -189,7 +199,7 @@ class EventCfg:
                     "right_elbow_joint",
                 ],
             ),
-            "position_range": (-0.3, 0.3),  # Random offset range in radians (~±17 degrees)
+            "position_range": (-0.5, 0.5),  # Random offset range in radians (~±17 degrees)
         },
     )
     
@@ -206,10 +216,10 @@ class CommandsCfg:
         heading_command=False,
         debug_vis=True,
         ranges=mdp.UniformLevelVelocityCommandCfg.Ranges(
-            lin_vel_x=(-0.1, 0.1), lin_vel_y=(-0.1, 0.1), ang_vel_z=(-0.1, 0.1)
+            lin_vel_x=(-0.0, 0.0), lin_vel_y=(-0.0, 0.0), ang_vel_z=(-0.0, 0.0)
         ),
         limit_ranges=mdp.UniformLevelVelocityCommandCfg.Ranges(
-            lin_vel_x=(-0.5, 1.0), lin_vel_y=(-0.3, 0.3), ang_vel_z=(-0.2, 0.2)
+            lin_vel_x=(-0.0, 0.0), lin_vel_y=(-0.0, 0.0), ang_vel_z=(-0.0, 0.0)
         ),
     )
 
@@ -340,14 +350,14 @@ class RewardsCfg:
     )
 
     # -- other
-    undesired_contacts = RewTerm(
-        func=mdp.undesired_contacts,
-        weight=-1,
-        params={
-            "threshold": 1,
-            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=["(?!.*ankle.*).*"]),
-        },
-    )
+    # undesired_contacts = RewTerm(
+    #     func=mdp.undesired_contacts,
+    #     weight=-1,
+    #     params={
+    #         "threshold": 1,
+    #         "sensor_cfg": SceneEntityCfg("contact_forces", body_names=["(?!.*ankle.*).*"]),
+    #     },
+    # )
 
 
 @configclass

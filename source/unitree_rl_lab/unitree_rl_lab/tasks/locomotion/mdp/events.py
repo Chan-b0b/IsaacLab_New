@@ -87,7 +87,7 @@ def reset_joints_default_by_offset(
 
     biased_joint_pos = biased_joint_pos.clamp_(selected_joint_pos_limits[..., 0], selected_joint_pos_limits[..., 1])
 
-    current_default_joint_pos_all_dofs[:, joint_indices_to_modify] = biased_joint_pos
-    asset.data.default_joint_pos[env_ids] = current_default_joint_pos_all_dofs
+    # current_default_joint_pos_all_dofs[:, joint_indices_to_modify] = biased_joint_pos
+    # asset.data.default_joint_pos[env_ids] = current_default_joint_pos_all_dofs
 
     asset.set_joint_position_target(biased_joint_pos, env_ids=env_ids, joint_ids=asset_cfg.joint_ids)
