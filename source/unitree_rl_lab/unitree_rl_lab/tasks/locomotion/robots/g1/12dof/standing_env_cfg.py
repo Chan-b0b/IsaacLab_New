@@ -111,15 +111,16 @@ class EventCfg:
         },
     )
 
-    add_base_mass_wrist = EventTerm(
-        func=mdp.randomize_rigid_body_mass,
-        mode="reset",
-        params={
-            "asset_cfg": SceneEntityCfg("robot", body_names=".*wrist.*"),
-            "mass_distribution_params": (-0.05, 5.0),
-            "operation": "add",
-        },
-    )
+    # add_base_mass_wrist = EventTerm(
+    #     func=mdp.randomize_rigid_body_mass_percentage,
+    #     mode="reset",
+    #     params={
+    #         "asset_cfg": SceneEntityCfg("robot", body_names=".*wrist.*"),
+    #         "mass_distribution_params": (-0.05, 1.0),
+    #         "operation": "add",
+    #         "randomize_percentage": 0.5,  # Apply to only 50% of environments
+    #     },
+    # )
 
     # reset
     base_external_force_torque = EventTerm(
@@ -173,9 +174,9 @@ class EventCfg:
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
             "force_range": {
-                "x": (0.0, 0.0),
-                "y": (0.0, 0.0),
-                "z": (0.0, 0.0),
+                "x": (0.3, 0.3),
+                "y": (0.3, 0.3),
+                "z": (0.3, 0.3),
             },
             "zero_force_percentage": 0.5,  # 30% of environments receive zero force
         },
@@ -184,7 +185,7 @@ class EventCfg:
     randomize_upper_body_pose = EventTerm(
         func=mdp.reset_joints_default_by_offset,
         mode="interval",
-        interval_range_s=(0.02, 5),  # Random interval between 5 and 12 seconds
+        interval_range_s=(0.02, 0.02),  # Random interval between 5 and 12 seconds
         params={
             "asset_cfg": SceneEntityCfg(
                 "robot",
@@ -199,8 +200,8 @@ class EventCfg:
                     "right_elbow_joint",
                 ],
             ),
-            "position_range": (-1, 1),  # Random offset range in radians (~±17 degrees)
-        },
+            "position_range": (-0.05, 0.05)
+            },
     )
     
     fix_waist = EventTerm(
@@ -219,11 +220,10 @@ class EventCfg:
         },
     )
 
-    
-    random_waist_yaw = EventTerm(
+
+    random_waist_yaw_init = EventTerm(
         func=mdp.reset_joints_default_by_offset,
-        mode="interval",
-        interval_range_s=(0.02, 5),  # Random interval between 5 and 12 seconds
+        mode="reset",
         params={
             "asset_cfg": SceneEntityCfg(
                 "robot",
@@ -231,7 +231,22 @@ class EventCfg:
                     "waist_yaw_joint"
                     ],
             ),
-            "position_range": (-1, 1),  # Random offset range in radians (~±17 degrees)
+            "position_range": (-0.15, 0.15),  # Random offset range in radians (~±17 degrees)
+        },
+    )
+      
+    random_waist_yaw = EventTerm(
+        func=mdp.reset_joints_default_by_offset,
+        mode="interval",
+        interval_range_s=(0.02,0.02),  # Random interval between 5 and 12 seconds
+        params={
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                joint_names=[
+                    "waist_yaw_joint"
+                    ],
+            ),
+            "position_range": (-0.05, 0.05),  # Random offset range in radians (~±17 degrees)
         },
     )
     
@@ -444,6 +459,10 @@ class RewardsCfg:
         func=mdp.action_rate_l2, 
         weight=-0.005
         )
+    action_smoothness = RewTerm(
+        func=mdp.action_smoothness_l2,
+        weight = -0.002
+    )
     dof_pos_limits = RewTerm(
         func=mdp.joint_pos_limits, 
         weight=-5.0,
